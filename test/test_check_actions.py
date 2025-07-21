@@ -5,4 +5,4 @@ import pytest
 from src.check_actions import main
 
 def test_main():
-    assert not main()
+    assert main()
