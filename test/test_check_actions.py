@@ -1,6 +1,8 @@
+# pylint: skip-file
+
 import pytest
 
-from dev.check_actions import main
+from src.check_actions import main
 
 def test_main():
     assert main()

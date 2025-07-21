@@ -1,6 +1,7 @@
-# File to check if automatic linting is working
+"""Dummy file"""
 
 def main():
+    """Dummy func"""
     print("File running check")
     return True
 
