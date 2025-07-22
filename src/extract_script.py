@@ -16,7 +16,8 @@ class PlantGetter:
         self.plant_data = []
 
     def get_plant(self, id: int) -> dict:
-        """Returns data for specific id endpoint, or none if not a successful request"""
+        """Returns data for specific id endpoint, or a dictionary detailing the error
+        if it was not a successful request"""
         endpoint = f'{self.url}{id}'
         try:
             response = requests.get(endpoint, timeout=10)
