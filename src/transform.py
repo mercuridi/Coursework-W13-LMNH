@@ -1,22 +1,14 @@
+"""Transforms a list of dictionaries containing plant data into a clean dataframe,
+ensuring essential data is there and validating types and values"""
 import pandas as pd
-
-example = {"plant_id": 8, "name": "Bird of paradise", "temperature": 16.29981566929083,
-           "origin_location": {"latitude": 54.1635, "longitude": 8.6662, "city": "Edwardfurt", "country": "Liberia"},
-           "botanist": {"name": "Bradford Mitchell DVM", "email": "bradford.mitchell.dvm@lnhm.co.uk", "phone": "(230) 859-2277 x3537"},
-           "last_watered": "2025-07-21T13:33:20.000Z", "soil_moisture": 32.568384615384616, "recording_taken": "2025-07-22T09:31:22.102Z",
-           "images": {"license": 451, "license_name": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
-                      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-                      "original_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                      "regular_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                      "medium_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                      "small_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                      "thumbnail": "https://perenual.com/storage/image/upgrade_access.jpg"},
-           "scientific_name": ["Heliconia schiedeana 'Fire and Ice'"]}
 
 
 class PlantDataTransformer:
+    """Has properties plant_data: raw input, and df: transformed output"""
+
     def __init__(self, plant_data: list[dict]):
         self.plant_data = plant_data
+        self.df = pd.DataFrame()
 
     def create_dataframe(self):
         """Create dataframe with correct column names from a list of nested dictionaries
@@ -66,6 +58,7 @@ class PlantDataTransformer:
         self.df.loc[self.df['soil_moisture'] < 0, 'soil_moisture'] = 0
 
     def transform(self) -> pd.DataFrame:
+        """Full transformation process and returns the datafram"""
         self.create_dataframe()
         self.clean_data()
         return self.df
