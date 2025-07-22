@@ -41,16 +41,43 @@ import pymssql
 from transform import PlantDataTransformer
 
 RDS_TABLES = {
-    "country": ["country_name"],
-    "city": ["city_name"],
-    "origin": [],
-    "botanist": [],
-    "plant": [],
-    "reading": [],
-    "photo": []
+    "country": [
+        "country_name"
+    ],
+    "city": [
+        "city_name",
+        "country_id"
+    ],
+    "origin": [
+        "latitude",
+        "longitude",
+        "city_id"
+    ],
+    "botanist": [
+        "botanist_name",
+        "botanist_email",
+        "botanist_phone"
+    ],
+    "plant": [
+        "english_name",
+        "scientific_name",
+        "origin_id"
+    ],
+    "reading": [
+        "reading_taken",
+        "last_watered",
+        "soil_moisture",
+        "soil_temperature",
+        "plant_id",
+        "botanist_id"
+    ],
+    "photo": [
+        "plant_id",
+        "photo_link"
+    ]
 }
 
-# TODO if this makes it into a pull request remember to make fun of me
+# TODO if this EXAMPLE global variable makes it into a pull request remember to make fun of me
 EXAMPLE = [{"plant_id": 8, "name": "Bird of paradise", "temperature": 16.29981566929083,
            "origin_location": {"latitude": 54.1635, "longitude": 8.6662, "city": "Edwardfurt", "country": "Liberia"},
             "botanist": {"name": "Bradford Mitchell DVM", "email": "bradford.mitchell.dvm@lnhm.co.uk", "phone": "(230) 859-2277 x3537"},
@@ -97,10 +124,21 @@ class DataLoader:
         return data
 
 
-    def update_cities(self) -> None:
+    def update_cities(self, table_name: str) -> None:
         """Function to update remote city data"""
-        unique_cities = set(self.api_data["city_name"])
-        print(unique_cities)
+        unique_cities_api = set(self.api_data["city_name"])
+        query = f"""
+        BEGIN
+            IF NOT EXISTS (SELECT * FROM {table_name}
+                        WHERE De = @_DE
+                        AND Assunto = @_ASSUNTO
+                        AND Data = @_DATA)
+                BEGIN
+                    INSERT INTO {table_name} ({", ".join(RDS_TABLES[table_name])})
+                    VALUES (@_DE, @_ASSUNTO, @_DATA)
+                END
+            END
+        """
 
 
     def update_tables(self):
