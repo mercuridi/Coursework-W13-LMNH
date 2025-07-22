@@ -119,7 +119,7 @@ class DataLoader:
 
 
     def update_table(self, table_name: str) -> pd.DataFrame:
-        """Function to quickly update a local table using RDS data"""
+        """Function to quickly update a specific local table using RDS data"""
         if table_name not in RDS_TABLES:
             raise ValueError(f"Given table name {table_name} is not a known destination")
         cur = self.conn.cursor(as_dict=True)
@@ -145,10 +145,11 @@ class DataLoader:
 
         self.easy_join("botanist")
         self.easy_join("plant")
-        self.easy_join("photo")
         self.easy_join("origin")
         self.easy_join("city")
         self.easy_join("country")
+        # Photo relationship goes "wrong way" to be included?
+        # Check again when it's not nearly 10pm
 
 
     def easy_join(self, table_name_to_join: str):
@@ -156,7 +157,7 @@ class DataLoader:
         if table_name_to_join not in RDS_TABLES:
             raise ValueError(f"Given table name {table_name_to_join} is not a known destination")
 
-        self.remote_mega_df.join(
+        self.remote_mega_df = self.remote_mega_df.join(
             other=self.remote_tables[table_name_to_join].set_index("id"),
             on=f"{table_name_to_join}_id",
             how="outer"
@@ -178,4 +179,4 @@ if __name__ == "__main__":
 
     dotenv.load_dotenv()
     loader = DataLoader(ex)
-    loader.update_remote_rds("city")
+    # loader.update_remote_rds("city")
