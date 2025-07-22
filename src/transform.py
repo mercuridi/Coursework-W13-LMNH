@@ -18,22 +18,16 @@ class PlantDataTransformer:
     def __init__(self, plant_data: list[dict]):
         self.plant_data = plant_data
 
-    def create_dataframe(self) -> pd.DataFrame:
+    def create_dataframe(self):
         """Create dataframe with correct column names from a list of nested dictionaries
         Skips plant if it's missing an ID, temp, moisture, or recording timestamp"""
         unnested_data = []
         for plant in self.plant_data:
             try:
-                # Required fields
-                plant_id = plant["plant_id"]
-                soil_temp = plant["temperature"]
-                soil_moisture = plant["soil_moisture"]
-                recording_taken = plant["recording_taken"]
-
                 unnested_data.append({
-                    "plant_id": plant_id,
+                    "plant_id": plant["plant_id"],  # required
                     "english_name": plant.get("name"),
-                    "soil_temperature": soil_temp,
+                    "soil_temperature": plant["temperature"],  # required
                     "latitude": plant.get("origin_location", {}).get("latitude"),
                     "longitude": plant.get("origin_location", {}).get("longitude"),
                     "city_name": plant.get("origin_location", {}).get("city"),
@@ -42,8 +36,8 @@ class PlantDataTransformer:
                     "botanist_email": plant.get("botanist", {}).get("email"),
                     "botanist_phone": plant.get("botanist", {}).get("phone"),
                     "last_watered": plant.get("last_watered"),
-                    "soil_moisture": soil_moisture,
-                    "recording_taken": recording_taken,
+                    "soil_moisture": plant["soil_moisture"],  # required
+                    "recording_taken": plant["recording_taken"],  # required
                     "image_link": plant.get("images", {}).get("original_url"),
                     "scientific_name": plant.get("scientific_name")
                 })
@@ -51,7 +45,6 @@ class PlantDataTransformer:
                 # Skip if any required fields are missing
                 continue
         self.df = pd.DataFrame(unnested_data)
-        return self.df
 
     def clean_data(self):
         """Clean the dataframe (e.g. handle nulls, ensure correct data types)"""
@@ -63,9 +56,16 @@ class PlantDataTransformer:
 
         # Ensure readings are floats
         for col in ['soil_temperature', 'soil_moisture']:
-            if col in self.df.columns:
-                self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
+            self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
 
         # If scientific_name is always in a list on its own
         if 'scientific_name' in self.df.columns:
-            self.df['scientific'] = self.df['scientific'][0]
+            self.df['scientific_name'] = self.df['scientific_name'][0]
+
+        # Ensure positive moisture
+        self.df.loc[self.df['soil_moisture'] < 0, 'soil_moisture'] = 0
+
+    def transform(self) -> pd.DataFrame:
+        self.create_dataframe()
+        self.clean_data()
+        return self.df

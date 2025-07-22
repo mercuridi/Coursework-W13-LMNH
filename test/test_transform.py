@@ -1,5 +1,6 @@
 # pylint: skip-file
 from src.transform import PlantDataTransformer
+import pandas as pd
 import pytest
 
 EXAMPLE = [{"plant_id": 8, "name": "Bird of paradise", "temperature": 16.29981566929083,
@@ -25,3 +26,37 @@ def test_column_names():
                             'latitude', 'longitude', 'city_name', 'country_name',
                             'botanist_name', 'botanist_email', 'botanist_phone',
                             'last_watered', 'soil_moisture', 'recording_taken', 'image_link', 'scientific_name']
+
+
+def test_no_moisture():
+    transformer = PlantDataTransformer(
+        [{"plant_id": 8, "temperature": 16.29981566929083, "recording_taken": "2025-07-22T09:31:22.102Z"}])
+    transformer.create_dataframe()
+    df = transformer.df
+    assert df.empty
+
+
+def test_negative_moisture():
+    transformer = PlantDataTransformer(
+        [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "2025-07-22T09:31:22.102Z"}])
+    transformer.transform()
+    df = transformer.df
+    assert df.iloc[0]['soil_moisture'] == 0
+
+
+def test_timestamp_is_datetime():
+    transformer = PlantDataTransformer(
+        [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "2025-07-22T09:31:22.102Z"}])
+    transformer.transform()
+    df = transformer.df
+    assert pd.api.types.is_datetime64_any_dtype(df["recording_taken"])
+
+
+def test_invalid_timestamp_is_handled():
+    transformer = PlantDataTransformer(
+        [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "lol"}])
+    transformer.transform()
+    df = transformer.df
+    assert pd.api.types.is_datetime64_any_dtype(
+        df["recording_taken"])  #  column type remains
+    assert pd.isna(df.loc[0, "recording_taken"])  # becomes NaT
