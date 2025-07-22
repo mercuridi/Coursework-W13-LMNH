@@ -25,6 +25,8 @@ def main():
     cur.execute("select * from country;")
     vals = cur.fetchall()
     print(vals)
+    cur.close()
+    conn.close()
 
 
 def get_rds_conn():
