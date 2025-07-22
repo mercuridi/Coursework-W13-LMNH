@@ -16,7 +16,8 @@ class PlantGetter:
         self.plant_data = []
 
     def get_plant(self, id: int) -> dict:
-        """Returns data for specific id endpoint, or none if not a succsseful request"""
+        """Returns data for specific id endpoint, or a dictionary detailing the error
+        if it was not a successful request"""
         endpoint = f'{self.url}{id}'
         try:
             response = requests.get(endpoint, timeout=10)
@@ -24,15 +25,15 @@ class PlantGetter:
             if response.status_code == 200:
                 data = response.json()
                 return data
-            return None
+            return {"error": "404 Not Found", "id": id}
         except requests.exceptions.RequestException:
-            return None
+            return {"error": "Request Exception", "id": id}
 
     def loop_ids(self) -> list[dict]:
         """Loops through endpoints, stopping after a certain number of failed requests"""
         while self.consecutive_404 < self.max_404:
             data = self.get_plant(self.id)
-            if data:
+            if "error" not in data:
                 self.plant_data.append(data)
                 self.consecutive_404 = 0
             else:

@@ -10,7 +10,7 @@ def test_successful_request(requests_mock):
     pg = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
     data = pg.get_plant(1)
 
-    assert data['name'] == "daffodil"
+    assert data.get('name') == "daffodil"
     assert requests_mock.called
     assert requests_mock.call_count == 1
 
@@ -22,7 +22,7 @@ def test_unsuccessful_request(requests_mock):
     pg = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
     data = pg.get_plant(1)
 
-    assert data is None
+    assert data == {"error": "404 Not Found", "id": 1}
     assert requests_mock.called
     assert requests_mock.call_count == 1
 
@@ -65,11 +65,11 @@ def test_loop_continues_after_1_404(requests_mock):
     assert requests_mock.call_count == 11
 
 
-def test_exception_returns_none(requests_mock):
+def test_exception_returns_error_dict(requests_mock):
     """checks that exceptions return none"""
     requests_mock.get(f"{BASE_ENDPOINT}1",
                       exc=requests.exceptions.ConnectionError)
     pg = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
     data = pg.get_plant(1)
-    assert data is None
+    assert data == {"error": "Request Exception", "id": 1}
     assert requests_mock.call_count == 1
