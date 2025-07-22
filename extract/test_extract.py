@@ -1,6 +1,6 @@
+# pylint: skip-file
 from extract_script import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
 import requests
-import requests_mock
 
 
 def test_successful_request(requests_mock):
