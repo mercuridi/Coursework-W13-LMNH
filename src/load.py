@@ -64,6 +64,7 @@ EXAMPLE = [{"plant_id": 8, "name": "Bird of paradise", "temperature": 16.2998156
                        "thumbnail": "https://perenual.com/storage/image/upgrade_access.jpg"},
             "scientific_name": ["Heliconia schiedeana 'Fire and Ice'"]}]
 
+
 class DataLoader:
     """Class which handles the loading of a clean dataframe to the RDS"""
     def __init__(self, df: pd.DataFrame):
@@ -73,7 +74,7 @@ class DataLoader:
         if len(df) == 0:
             raise ValueError("Dataframe must contain data.")
 
-        self.data = df
+        self.api_data = df
         self.conn = pymssql.connect(
             os.environ["DB_HOST"],
             os.environ["DB_USER"],
@@ -91,6 +92,7 @@ class DataLoader:
 
         self.update_tables()
 
+
     def get_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly get a table from the RDS as a dataframe"""
         if table_name not in RDS_TABLES:
@@ -100,6 +102,7 @@ class DataLoader:
         data = pd.DataFrame(cur.fetchall())
         cur.close()
         return data
+
 
     def update_tables(self):
         """Function to quickly update all the local tables"""
@@ -112,13 +115,11 @@ class DataLoader:
         self.reading    = self.get_table("reading")
         self.photo      = self.get_table("photo")
 
+
     def close_conn(self):
         """Closes the self-held database connection"""
         self.conn.close()
 
-    def collect_queries(self):
-        """Adds all the queries to run to the self.queries attribute dictionary"""
-        pass
 
 if __name__ == "__main__":
 
