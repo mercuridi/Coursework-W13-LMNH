@@ -41,7 +41,7 @@ def test_negative_moisture():
         [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "2025-07-22T09:31:22.102Z"}])
     transformer.transform()
     df = transformer.df
-    assert df.iloc[0]['soil_moisture'] == 0
+    assert pd.isnull(df['soil_moisture'].iloc[0])
 
 
 def test_timestamp_is_datetime():

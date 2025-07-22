@@ -54,8 +54,13 @@ class PlantDataTransformer:
         if 'scientific_name' in self.df.columns:
             self.df['scientific_name'] = self.df['scientific_name'][0]
 
-        # Ensure positive moisture
-        self.df.loc[self.df['soil_moisture'] < 0, 'soil_moisture'] = 0
+        # Replace negative moisture with null
+        self.df['soil_moisture'] = self.df['soil_moisture'].mask(
+            self.df['soil_moisture'] < 0)
+
+        # Replace temperatures outside of valid range with null
+        self.df['soil_temperature'] = self.df['soil_temperature'].mask(
+            (self.df['soil_temperature'] < -10) | (self.df['soil_temperature'] > 60))
 
     def transform(self) -> pd.DataFrame:
         """Full transformation process and returns the datafram"""
