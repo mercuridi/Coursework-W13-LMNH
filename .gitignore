@@ -6,4 +6,12 @@ __pycache__
 
 .DS_Store
 
-*/*.tfvars
+# Ignore all .tfvars files (including terraform.tfvars)
+*.tfvars
+
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Ignore .terraform directory (terraform plugins and cache)
+.terraform/
