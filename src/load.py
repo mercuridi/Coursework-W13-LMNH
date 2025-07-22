@@ -5,7 +5,7 @@ import dotenv
 import pandas as pd
 import pymssql
 
-def main(df: pd.DataFrame):
+def main(df: pd.DataFrame = pd.DataFrame()):
     """
     (WORK) Takes in a dataframe of all the data we need
     (WORK) Construct insertion queries from the dataframe in a dict
@@ -20,6 +20,11 @@ def main(df: pd.DataFrame):
     (WORK) Runs insertions
     (DONE) Closes connections gracefully
     """
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError(f"Input to load stage must be a dataframe; received {type(df)}")
+    if len(df) == 0:
+        raise ValueError("Dataframe must contain data.")
+
     queries = {}
 
     conn = get_rds_conn()
