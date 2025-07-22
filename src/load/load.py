@@ -2,10 +2,10 @@
 import os 
 
 import dotenv
-import boto3
+import pandas as pd
 import pymssql
 
-def main():
+def main(df: pd.DataFrame):
     """
     (WORK) Takes in a dataframe of all the data we need
     (WORK) Construct insertion queries from the dataframe in a dict
@@ -18,8 +18,10 @@ def main():
     (WORK)    Reading insertions
     (DONE) Makes a connection to the RDS
     (WORK) Runs insertions
-    (WORK) Closes connections gracefully
+    (DONE) Closes connections gracefully
     """
+    queries = {}
+
     conn = get_rds_conn()
     cur = conn.cursor()
     cur.execute("select * from country;")
@@ -29,7 +31,7 @@ def main():
     conn.close()
 
 
-def get_rds_conn():
+def get_rds_conn() -> pymssql.Connection:
     """
     Function to easily get an RDS connection
     Requires the .env to be loaded
