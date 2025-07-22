@@ -67,6 +67,7 @@ EXAMPLE = [{"plant_id": 8, "name": "Bird of paradise", "temperature": 16.2998156
 
 class DataLoader:
     """Class which handles the loading of a clean dataframe to the RDS"""
+
     def __init__(self, df: pd.DataFrame):
         """Constructor for class"""
         if not isinstance(df, pd.DataFrame):
@@ -82,19 +83,11 @@ class DataLoader:
             os.environ["DB_NAME"]
         )
 
-        self.country    = None
-        self.city       = None
-        self.origin     = None
-        self.botanist   = None
-        self.plant      = None
-        self.reading    = None
-        self.photo      = None
-
+        self.remote_tables = {}
         self.update_tables()
 
-
-    def get_table(self, table_name: str) -> pd.DataFrame:
-        """Function to quickly get a table from the RDS as a dataframe"""
+    def update_table(self, table_name: str) -> pd.DataFrame:
+        """Function to quickly update a local table using RDS data"""
         if table_name not in RDS_TABLES:
             raise ValueError(f"Given table name {table_name} is not a known destination")
         cur = self.conn.cursor(as_dict=True)
@@ -104,16 +97,16 @@ class DataLoader:
         return data
 
 
+    def update_cities(self) -> None:
+        """Function to update remote city data"""
+        unique_cities = set(self.api_data["city_name"])
+        print(unique_cities)
+
+
     def update_tables(self):
         """Function to quickly update all the local tables"""
-        # TODO BIG target for optimisation!
-        self.country    = self.get_table("country")
-        self.city       = self.get_table("city")
-        self.origin     = self.get_table("origin")
-        self.botanist   = self.get_table("botanist")
-        self.plant      = self.get_table("plant")
-        self.reading    = self.get_table("reading")
-        self.photo      = self.get_table("photo")
+        for key in RDS_TABLES:
+            self.remote_tables[key] = self.update_table(key)
 
 
     def close_conn(self):
@@ -126,9 +119,9 @@ if __name__ == "__main__":
     # TODO remove this for PR
     transformer = PlantDataTransformer(EXAMPLE)
     transformer.create_dataframe()
-    df = transformer.df
+    ex = transformer.df
     # TODO removals end here
 
     dotenv.load_dotenv()
-    loader = DataLoader(df)
-    print()
+    loader = DataLoader(ex)
+    loader.update_cities()
