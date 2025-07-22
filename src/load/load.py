@@ -1,4 +1,43 @@
 """Script to load cleaned data into the SQL Server RDS"""
+import os 
+
+import dotenv
+import boto3
+import pymssql
 
 def main():
-    pass
+    """
+    Takes in a dataframe of all the data we need
+    Construct insertion queries from the dataframe in a dict
+        Country insertions
+        City insertions
+        Origin insertions
+        Plant insertions
+        Photo insertions
+        Botanist insertions
+        Reading insertions
+    Makes a connection to the RDS
+    Runs insertions
+    Closes connections gracefully
+    """
+    conn = get_rds_conn()
+    cur = conn.cursor()
+    cur.execute("select * from country;")
+    vals = cur.fetchall()
+    print(vals)
+
+
+def get_rds_conn():
+    """
+    Function to easily get an RDS connection
+    Requires the .env to be loaded
+    """
+    return pymssql.connect(
+        os.environ["DB_HOST"],
+        os.environ["DB_USER"],
+        os.environ["DB_PASSWORD"],
+        os.environ["DB_NAME"])
+
+if __name__ == "__main__":
+    dotenv.load_dotenv()
+    main()
