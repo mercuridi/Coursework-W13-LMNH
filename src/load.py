@@ -40,6 +40,7 @@ import pymssql
 
 from transform import PlantDataTransformer
 
+# dictionary which exposes the ERD as a dictionary
 RDS_TABLES = {
     "country": [
         "country_name"
@@ -111,7 +112,11 @@ class DataLoader:
         )
 
         self.remote_tables = {}
+        self.remote_mega_df = None
         self.update_tables()
+
+        print(self.remote_mega_df)
+
 
     def update_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly update a local table using RDS data"""
@@ -124,27 +129,38 @@ class DataLoader:
         return data
 
 
-    def update_cities(self, table_name: str) -> None:
+    def update_remote_rds(self, table_name: str) -> None:
         """Function to update remote city data"""
-        unique_cities_api = set(self.api_data["city_name"])
-        query = f"""
-        BEGIN
-            IF NOT EXISTS (SELECT * FROM {table_name}
-                        WHERE De = @_DE
-                        AND Assunto = @_ASSUNTO
-                        AND Data = @_DATA)
-                BEGIN
-                    INSERT INTO {table_name} ({", ".join(RDS_TABLES[table_name])})
-                    VALUES (@_DE, @_ASSUNTO, @_DATA)
-                END
-            END
-        """
+        table_df_from_api = self.api_data[RDS_TABLES[table_name]]
+        # pd.to_sql call here before sending to RDS
 
 
     def update_tables(self):
-        """Function to quickly update all the local tables"""
+        """Function to quickly update & overwrite all the local tables"""
         for key in RDS_TABLES:
             self.remote_tables[key] = self.update_table(key)
+            print(self.remote_tables[key])
+
+        self.remote_mega_df = self.remote_tables["reading"].copy()
+
+        self.easy_join("botanist")
+        self.easy_join("plant")
+        self.easy_join("photo")
+        self.easy_join("origin")
+        self.easy_join("city")
+        self.easy_join("country")
+
+
+    def easy_join(self, table_name_to_join: str):
+        """Wrapper function to easily and neatly join a table onto the internal 'megaframe'"""
+        if table_name_to_join not in RDS_TABLES:
+            raise ValueError(f"Given table name {table_name_to_join} is not a known destination")
+
+        self.remote_mega_df.join(
+            other=self.remote_tables[table_name_to_join].set_index("id"),
+            on=f"{table_name_to_join}_id",
+            how="outer"
+        )
 
 
     def close_conn(self):
@@ -162,4 +178,4 @@ if __name__ == "__main__":
 
     dotenv.load_dotenv()
     loader = DataLoader(ex)
-    loader.update_cities()
+    loader.update_remote_rds("city")
