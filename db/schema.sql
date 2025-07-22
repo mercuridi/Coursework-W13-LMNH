@@ -37,6 +37,7 @@ create table botanist (
     id int not null identity(1,1),
     botanist_name varchar(100),
     botanist_email varchar(100),
+    botanist_phone varchar(100)
     primary key (id)
 );
 
