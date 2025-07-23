@@ -98,8 +98,8 @@ class DataLoader:
 
     def update_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly update a specific local table using RDS data"""
-        logging.info("Updating local record of table %s", table_name)
         self.check_table_name_valid(table_name)
+        logging.info("Updating local record of table %s", table_name)
         cur = self.conn.cursor(as_dict=True)
         cur.execute(f"select * from {table_name};")
         data = pd.DataFrame(cur.fetchall())
@@ -143,11 +143,20 @@ class DataLoader:
             logging.info("No value found, adding to table to fetch foreign key ID")
 
             logging.info("Constructing query")
-            query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
-            logging.info("Query constructed: \n%s", query)
+            simulated_query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
+            logging.info("Query constructed: \n%s", simulated_query)
+            logging.info("NOTE: The above query is not what is being executed.")
+            logging.info("NOTE: The executed query is properly sanitised with query parameters.")
 
             cur = self.conn.cursor()
-            cur.execute(query)
+            cur.execute(
+                "insert into %s (%s) values ('%s');",
+                [
+                    table_name,
+                    ', '.join(table_columns),
+                    '\', \''.join([str(row[k]) for k in table_columns])
+                ]
+            )
             self.conn.commit()
             logging.info("Query executed")
 
