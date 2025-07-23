@@ -21,3 +21,4 @@ tomlkit==0.13.3
 pandas
 requests
 requests-mock
+pymssql
