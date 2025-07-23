@@ -9,14 +9,14 @@ drop table if exists country;
 
 create table country (
     id int not null identity(1,1),
-    country_name varchar,
+    country_name varchar(100),
     primary key (id),
 );
 
 
 create table city (
     id int not null identity(1,1),
-    city_name varchar,
+    city_name varchar(100),
     country_id int,
     primary key (id),
     constraint fk_country_city foreign key (country_id) references country (id)
@@ -35,16 +35,17 @@ create table origin (
 
 create table botanist (
     id int not null identity(1,1),
-    botanist_name varchar,
-    botanist_email varchar,
+    botanist_name varchar(100),
+    botanist_email varchar(100),
+    botanist_phone varchar(100)
     primary key (id)
 );
 
 
 create table plant (
     id int not null identity(1,1),
-    english_name varchar,
-    scientific_name varchar,
+    english_name varchar(100),
+    scientific_name varchar(100),
     origin_id integer,
     primary key (id),
     constraint fk_botanist_plant foreign key (origin_id) references origin (id)
@@ -68,7 +69,7 @@ create table reading (
 create table photo (
     id int not null identity(1,1),
     plant_id int,
-    photo_link varchar,
+    photo_link varchar(100),
     primary key (id),
     constraint fk_plant_photo foreign key (plant_id) references plant (id)
 );
