@@ -78,5 +78,3 @@ def handler(event, context):
         return {"statusCode": 200}
     except Exception as e:
         return {"statusCode": 500, "error": str(e)}
-
-run_pipeline()
