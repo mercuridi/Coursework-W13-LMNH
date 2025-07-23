@@ -124,6 +124,8 @@ class DataLoader:
 
         logging.info("Added all rows")
 
+        self.close_conn()
+
 
     def add_row(self, row: pd.DataFrame, table_name: str, level=0) -> int:
         """Adds a single row of data to a remote table"""
@@ -147,12 +149,13 @@ class DataLoader:
 
             cur = self.conn.cursor()
             cur.execute(
-                "insert into %s (%s) values ('%s');",
-                (
-                    table_name,
-                    ', '.join(table_columns),
-                    '\', \''.join([str(row[k]) for k in table_columns])
-                )
+                # "insert into %s (%s) values ('%s');",
+                # (
+                #     table_name,
+                #     ', '.join(table_columns),
+                #     '\', \''.join([str(row[k]) for k in table_columns])
+                # )
+                simulated_query
             )
             self.conn.commit()
             logging.info("Query executed")
@@ -160,7 +163,7 @@ class DataLoader:
             self.update_table(table_name)
             val = self.fetch_id(row, table_name, table_columns)
             logging.info("Returning newly inserted ID: %s", val)
-    
+
         logging.info("Returning %s ID", table_name)
         logging.info("Value type: %s", type(val))
         logging.info("End of recursion level %s\n", level)
