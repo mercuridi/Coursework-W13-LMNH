@@ -142,20 +142,20 @@ class DataLoader:
             logging.info("No value found, adding to table to fetch foreign key ID")
 
             logging.info("Constructing query")
-            simulated_query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
-            logging.info("Query constructed: \n%s", simulated_query)
-            logging.info("NOTE: The above query is not what is being executed.")
-            logging.info("NOTE: The executed query is properly sanitised with query parameters.")
+            query_string = f"insert into {table_name} ({', '.join(table_columns)}) values ({', '.join(['%s' for _ in range(len(table_columns))])});"
+            logging.info("Query string:")
+            logging.info(query_string)
 
+            logging.info("Constructing params")
+            query_params = [str(row[k]) if str(row[k]) != "nan" else "NULL" for k in table_columns]
+            logging.info("Params for query:")
+            logging.info(query_params)
+
+            logging.info("Executing query")
             cur = self.conn.cursor()
             cur.execute(
-                # "insert into %s (%s) values ('%s');",
-                # (
-                #     table_name,
-                #     ', '.join(table_columns),
-                #     '\', \''.join([str(row[k]) for k in table_columns])
-                # )
-                simulated_query
+                operation=query_string,
+                params=query_params
             )
             self.conn.commit()
             logging.info("Query executed")
@@ -171,7 +171,7 @@ class DataLoader:
         return val
 
 
-    def fetch_id(self, row, table_name, table_columns):
+    def fetch_id(self, row: pd.DataFrame, table_name: str, table_columns: list[str]) -> int:
         """Wrapper to neatly fetch an ID"""
         logging.info("Attempting to grab %s ID", table_name)
         table = self.remote_tables[table_name]
@@ -187,6 +187,9 @@ class DataLoader:
             val = 0
             logging.info("Error handled: database table is empty AND/OR column does not exist")
 
+        if isinstance(val, pd.Series):
+            logging.info("Value found is a series; returning 0")
+            val = 0
 
         logging.info("ID for %s: %s", table_name, val)
         return val
