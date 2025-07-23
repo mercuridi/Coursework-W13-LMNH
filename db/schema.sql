@@ -69,7 +69,7 @@ create table reading (
 create table photo (
     id int not null identity(1,1),
     plant_id int,
-    photo_link varchar(100),
+    photo_link varchar(250),
     primary key (id),
     constraint fk_plant_photo foreign key (plant_id) references plant (id)
 );
