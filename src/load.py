@@ -33,6 +33,7 @@ scientific_name
 """
 
 import os 
+import logging
 
 import dotenv
 import pandas as pd
@@ -41,7 +42,7 @@ import pymssql
 from transform import PlantDataTransformer
 
 # dictionary which exposes the ERD as a dictionary
-RDS_TABLES = {
+RDS_TABLES_WITH_FK = {
     "country": [
         "country_name"
     ],
@@ -74,6 +75,58 @@ RDS_TABLES = {
     ],
     "photo": [
         "plant_id",
+        "photo_link"
+    ]
+}
+
+TABLE_DEPENDENCIES = {
+    "country": [],
+    "city": [
+        "country"
+    ],
+    "origin": [
+        "city"
+    ],
+    "botanist": [],
+    "plant": [
+        "origin"
+    ],
+    "reading": [
+        "plant",
+        "botanist"
+    ],
+    "photo": [
+        "plant",
+    ]
+}
+
+RDS_TABLES_WITHOUT_FK = {
+    "country": [
+        "country_name"
+    ],
+    "city": [
+        "city_name"
+    ],
+    "origin": [
+        "latitude",
+        "longitude"
+    ],
+    "botanist": [
+        "botanist_name",
+        "botanist_email",
+        "botanist_phone"
+    ],
+    "plant": [
+        "english_name",
+        "scientific_name"
+    ],
+    "reading": [
+        "reading_taken",
+        "last_watered",
+        "soil_moisture",
+        "soil_temperature"
+    ],
+    "photo": [
         "photo_link"
     ]
 }
@@ -111,57 +164,61 @@ class DataLoader:
             os.environ["DB_NAME"]
         )
 
-        self.remote_tables = {}
-        self.remote_mega_df = None
+        self.remote_tables: dict[pd.DataFrame] = {}
         self.update_tables()
-
-        print(self.remote_mega_df)
-
 
     def update_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly update a specific local table using RDS data"""
-        if table_name not in RDS_TABLES:
-            raise ValueError(f"Given table name {table_name} is not a known destination")
+        self.check_table_name_valid(table_name)
         cur = self.conn.cursor(as_dict=True)
         cur.execute(f"select * from {table_name};")
         data = pd.DataFrame(cur.fetchall())
         cur.close()
-        return data
-
-
-    def update_remote_rds(self, table_name: str) -> None:
-        """Function to update remote city data"""
-        table_df_from_api = self.api_data[RDS_TABLES[table_name]]
-        # pd.to_sql call here before sending to RDS
+        self.remote_tables[table_name] = data
 
 
     def update_tables(self):
         """Function to quickly update & overwrite all the local tables"""
-        for key in RDS_TABLES:
-            self.remote_tables[key] = self.update_table(key)
-            print(self.remote_tables[key])
-
-        self.remote_mega_df = self.remote_tables["reading"].copy()
-
-        self.easy_join("botanist")
-        self.easy_join("plant")
-        self.easy_join("origin")
-        self.easy_join("city")
-        self.easy_join("country")
-        # Photo relationship goes "wrong way" to be included?
-        # Check again when it's not nearly 10pm
+        for key in RDS_TABLES_WITH_FK:
+            self.update_table(key)
 
 
-    def easy_join(self, table_name_to_join: str):
-        """Wrapper function to easily and neatly join a table onto the internal 'megaframe'"""
-        if table_name_to_join not in RDS_TABLES:
-            raise ValueError(f"Given table name {table_name_to_join} is not a known destination")
+    def upload_tables_to_rds(self):
+        """Inserts fresh data into the RDS; skips addition if exact row already exists"""
+        self.api_data["reading_id"] = self.api_data.apply(lambda x: self.get_id(x, "reading"), axis=1)
+        logging.info(self.api_data)
 
-        self.remote_mega_df = self.remote_mega_df.join(
-            other=self.remote_tables[table_name_to_join].set_index("id"),
-            on=f"{table_name_to_join}_id",
-            how="outer"
-        )
+    
+    def handle_row(self, row):
+        """Handles adding a single reading to the remote database"""
+        pass
+
+
+    def get_id(self, row: pd.DataFrame, table_name: str, level=0) -> int:
+        logging.info("RECURSION LEVEL: %s", level)
+        table_columns = RDS_TABLES_WITH_FK[table_name]
+        for dependency in TABLE_DEPENDENCIES[table_name]:
+            self.get_id(row, dependency, level=level+1)
+
+        val = self.remote_tables[table_name].loc[self.remote_tables[table_name][table_columns[0]] == row[table_columns[0]]]["id"]
+        if len(val) == 0:
+            # to_sql not working
+            # row[RDS_TABLES_WITHOUT_FK["botanist"]].to_sql(name="botanist", con=self.conn)
+            cur = self.conn.cursor()
+            query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
+            logging.info("Query constructed: %s", query)
+            cur.execute(query)
+            self.conn.commit()
+            self.update_table(table_name)
+            val = self.remote_tables[table_name].loc[self.remote_tables[table_name][table_columns[0]] == row[table_columns[0]]]["id"]
+    
+        return val
+    
+
+
+    def check_table_name_valid(self, table_name: str):
+        if table_name not in RDS_TABLES_WITH_FK:
+            raise ValueError(f"Given table name {table_name} is not a known destination")
 
 
     def close_conn(self):
@@ -170,6 +227,12 @@ class DataLoader:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        filename="logs/load.log",
+        filemode="w",
+        encoding="utf8",
+        level=logging.INFO
+    )
 
     # TODO remove this for PR
     transformer = PlantDataTransformer(EXAMPLE)
@@ -179,4 +242,4 @@ if __name__ == "__main__":
 
     dotenv.load_dotenv()
     loader = DataLoader(ex)
-    # loader.update_remote_rds("city")
+    loader.upload_tables_to_rds()
