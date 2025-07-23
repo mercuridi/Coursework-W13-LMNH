@@ -1,37 +1,4 @@
 """Script to load cleaned data into the SQL Server RDS"""
-
-"""
-(DONE) Takes in a dataframe of all the data we need
-(WORK) Construct insertion queries from the dataframe in a dict
-(WORK)    Country insertions
-(WORK)    City insertions
-(WORK)    Origin insertions
-(WORK)    Plant insertions
-(WORK)    Photo insertions
-(WORK)    Botanist insertions
-(WORK)    Reading insertions
-(DONE) Makes a connection to the RDS
-(WORK) Runs insertions
-(DONE) Closes connections gracefully
-
-DF Columns:
-plant_id
-english_name
-soil_temperature
-latitude
-longitude
-city_name
-country_name
-botanist_name
-botanist_email
-botanist_phone
-last_watered
-soil_moisture
-recording_taken
-image_link
-scientific_name
-"""
-
 import os 
 import logging
 
@@ -42,7 +9,7 @@ import pymssql
 
 from transform import PlantDataTransformer
 
-# dictionary which exposes the ERD as a dictionary
+# expose the ERD as a dictionary
 RDS_TABLES_WITH_FK = {
     "country": [
         "country_name"
@@ -80,6 +47,8 @@ RDS_TABLES_WITH_FK = {
     ]
 }
 
+# Mapping of the foreign keys each table has
+# Used to "plan" recursion paths
 TABLE_DEPENDENCIES = {
     "country": [],
     "city": [
@@ -100,51 +69,6 @@ TABLE_DEPENDENCIES = {
         "plant",
     ]
 }
-
-RDS_TABLES_WITHOUT_FK = {
-    "country": [
-        "country_name"
-    ],
-    "city": [
-        "city_name"
-    ],
-    "origin": [
-        "latitude",
-        "longitude"
-    ],
-    "botanist": [
-        "botanist_name",
-        "botanist_email",
-        "botanist_phone"
-    ],
-    "plant": [
-        "english_name",
-        "scientific_name"
-    ],
-    "reading": [
-        "reading_taken",
-        "last_watered",
-        "soil_moisture",
-        "soil_temperature"
-    ],
-    "photo": [
-        "photo_link"
-    ]
-}
-
-# TODO if this EXAMPLE global variable makes it into a pull request remember to make fun of me
-EXAMPLE = [{"plant_id": 8, "name": "Bird of paradise", "temperature": 16.29981566929083,
-           "origin_location": {"latitude": 54.1635, "longitude": 8.6662, "city": "Edwardfurt", "country": "Liberia"},
-            "botanist": {"name": "Bradford Mitchell DVM", "email": "bradford.mitchell.dvm@lnhm.co.uk", "phone": "(230) 859-2277 x3537"},
-            "last_watered": "2025-07-21T13:33:20.000Z", "soil_moisture": 32.568384615384616, "recording_taken": "2025-07-22T09:31:22.102Z",
-            "images": {"license": 451, "license_name": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
-                       "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-                       "original_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                       "regular_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                       "medium_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                       "small_url": "https://perenual.com/storage/image/upgrade_access.jpg",
-                       "thumbnail": "https://perenual.com/storage/image/upgrade_access.jpg"},
-            "scientific_name": ["Heliconia schiedeana 'Fire and Ice'"]}]
 
 
 class DataLoader:
@@ -205,7 +129,7 @@ class DataLoader:
 
 
     def add_row(self, row: pd.DataFrame, table_name: str, level=0) -> int:
-        """what is kai even smoking"""
+        """Adds a single row of data to a remote table"""
         # logging.info("Getting IDs for row %s", row)
         logging.info("\n\n!!! RECURSION LEVEL: %s", level)
         logging.info("Now searching table %s", table_name)
@@ -248,11 +172,11 @@ class DataLoader:
         except IndexError:
             # I think happens when the target is an integer?
             val = table.loc[table[table_columns[0]] == row[table_columns[0]]]["id"]
-            logging.info("Error handled: value is not in a series")
+            logging.info("Error handled: value is not in a series OR column is empty")
         except KeyError:
             # happens when the database is completely empty
             val = 0
-            logging.info("Error handled: database table is empty")
+            logging.info("Error handled: database table is empty AND/OR column does not exist")
 
 
         logging.info("ID for %s: %s", table_name, val)
@@ -274,27 +198,13 @@ class DataLoader:
         logging.info("RDS connection closed")
 
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        filename="logs/load.log",
-        filemode="w",
-        encoding="utf8",
-        level=logging.INFO
-    )
+# Example usage
 
-    # TODO remove this for PR
-    transformer = PlantDataTransformer(EXAMPLE)
-    transformer.transform()
-    ex = transformer.df
-    # TODO removals end here
+# Load .env
+# dotenv.load_dotenv()
 
-    logging.info(ex)
+# Initialise loader object
+# loader = DataLoader(df)
 
-    logging.info("Loading .env")
-    dotenv.load_dotenv()
-
-    logging.info("Initialising loader object")
-    loader = DataLoader(ex)
-
-    logging.info("Calling upload driver")
-    loader.upload_tables_to_rds()
+# Call upload driver
+# loader.upload_tables_to_rds()
