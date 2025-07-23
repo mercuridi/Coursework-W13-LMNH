@@ -2,7 +2,6 @@
 import os 
 import logging
 
-import dotenv
 import pandas as pd
 import numpy as np
 import pymssql
@@ -151,11 +150,11 @@ class DataLoader:
             cur = self.conn.cursor()
             cur.execute(
                 "insert into %s (%s) values ('%s');",
-                [
+                (
                     table_name,
                     ', '.join(table_columns),
                     '\', \''.join([str(row[k]) for k in table_columns])
-                ]
+                )
             )
             self.conn.commit()
             logging.info("Query executed")
