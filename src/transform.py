@@ -16,6 +16,7 @@ class PlantDataTransformer:
         unnested_data = []
         for plant in self.plant_data:
             try:
+                value = plant.get("images", {})
                 unnested_data.append({
                     "plant_id": plant["plant_id"],  # required
                     "english_name": plant.get("name"),
@@ -30,7 +31,7 @@ class PlantDataTransformer:
                     "last_watered": plant.get("last_watered"),
                     "soil_moisture": plant["soil_moisture"],  # required
                     "recording_taken": plant["recording_taken"],  # required
-                    "image_link": plant.get("images", {}).get("original_url"),
+                    "image_link": value.get("original_url") if isinstance(value, dict) else None,
                     "scientific_name": plant.get("scientific_name")
                 })
             except KeyError:
@@ -52,7 +53,8 @@ class PlantDataTransformer:
 
         # If scientific_name is always in a list on its own
         if 'scientific_name' in self.df.columns:
-            self.df['scientific_name'] = self.df['scientific_name'][0]
+            self.df['scientific_name'] = self.df['scientific_name'].apply(
+                lambda x: x[0] if isinstance(x, list) and x else None)
 
         # Replace negative moisture with null
         self.df['soil_moisture'] = self.df['soil_moisture'].mask(
