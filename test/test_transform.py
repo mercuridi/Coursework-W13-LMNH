@@ -41,7 +41,7 @@ def test_negative_moisture():
         [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "2025-07-22T09:31:22.102Z"}])
     transformer.transform()
     df = transformer.df
-    assert pd.isnull(df['soil_moisture'].iloc[0])
+    assert df.empty
 
 
 def test_timestamp_is_datetime():
@@ -54,7 +54,7 @@ def test_timestamp_is_datetime():
 
 def test_invalid_timestamp_is_handled():
     transformer = PlantDataTransformer(
-        [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "lol"}])
+        [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": 5.7, "recording_taken": "lol"}])
     transformer.transform()
     df = transformer.df
     assert pd.api.types.is_datetime64_any_dtype(
