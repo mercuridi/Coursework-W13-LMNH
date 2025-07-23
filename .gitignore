@@ -1,9 +1,23 @@
+# Ignore environment
 .env
 .venv
 
+# Ignore pytest caching
 __pycache__
 .pytest_cache
 
+# Macs sometimes make this file?
 .DS_Store
 
+# Ignore log files
 *.log
+
+# Ignore all .tfvars files (including terraform.tfvars)
+*.tfvars
+
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Ignore .terraform directory (terraform plugins and cache)
+.terraform/
