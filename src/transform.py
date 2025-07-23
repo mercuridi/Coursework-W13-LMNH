@@ -54,7 +54,7 @@ class PlantDataTransformer:
         # If scientific_name is always in a list on its own
         if 'scientific_name' in self.df.columns:
             self.df['scientific_name'] = self.df['scientific_name'].apply(
-                lambda x: x[0] if isinstance(x, list) and x else x)
+                lambda x: x[0].replace("'", '"') if isinstance(x, list) and x else x)
 
         # Replace negative moisture with null
         self.df['soil_moisture'] = self.df['soil_moisture'].mask(
