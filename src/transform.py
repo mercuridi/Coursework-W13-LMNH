@@ -29,7 +29,7 @@ class PlantDataTransformer:
                     "botanist_phone": plant.get("botanist", {}).get("phone"),
                     "last_watered": plant.get("last_watered"),
                     "soil_moisture": plant["soil_moisture"],  # required
-                    "recording_taken": plant["recording_taken"],  # required
+                    "reading_taken": plant["recording_taken"],  # required
                     "image_link": plant.get("images", {}).get("original_url"),
                     "scientific_name": plant.get("scientific_name")
                 })
@@ -42,7 +42,7 @@ class PlantDataTransformer:
         """Clean the dataframe (e.g. handle nulls, ensure correct data types)"""
 
         # Ensure timestamps are datetime objects, coercing errors to NaN
-        for col in ['last_watered', 'recording_taken']:
+        for col in ['last_watered', 'reading_taken']:
             if col in self.df.columns:
                 self.df[col] = pd.to_datetime(self.df[col], errors='coerce')
 
