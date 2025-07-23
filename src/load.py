@@ -151,6 +151,7 @@ class DataLoader:
 
     def __init__(self, df: pd.DataFrame):
         """Constructor for class"""
+        logging.info("Constructing loader class")
         if not isinstance(df, pd.DataFrame):
             raise ValueError(f"Input to load stage must be a dataframe; received {type(df)}")
         if len(df) == 0:
@@ -166,64 +167,78 @@ class DataLoader:
 
         self.remote_tables: dict[pd.DataFrame] = {}
         self.update_tables()
+        logging.info("Loader constructed")
+        logging.info(self)
 
     def update_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly update a specific local table using RDS data"""
+        logging.info("Updating local record of table %s", table_name)
         self.check_table_name_valid(table_name)
         cur = self.conn.cursor(as_dict=True)
         cur.execute(f"select * from {table_name};")
         data = pd.DataFrame(cur.fetchall())
         cur.close()
         self.remote_tables[table_name] = data
+        logging.info("Table record updated")
 
 
     def update_tables(self):
         """Function to quickly update & overwrite all the local tables"""
+        logging.info("Updating all local records of the remote RDS table")
         for key in RDS_TABLES_WITH_FK:
             self.update_table(key)
 
 
     def upload_tables_to_rds(self):
         """Inserts fresh data into the RDS; skips addition if exact row already exists"""
+        logging.info("Adding all rows to the RDS")
         self.api_data["reading_id"] = self.api_data.apply(lambda x: self.get_id(x, "reading"), axis=1)
-        logging.info(self.api_data)
-
-    
-    def handle_row(self, row):
-        """Handles adding a single reading to the remote database"""
-        pass
-
+        logging.info("Added all rows")
 
     def get_id(self, row: pd.DataFrame, table_name: str, level=0) -> int:
-        logging.info("RECURSION LEVEL: %s", level)
+        # logging.info("Getting IDs for row %s", row)
+        logging.info("Now searching table %s", table_name)
+        logging.info("!!! RECURSION LEVEL: %s", level)
         table_columns = RDS_TABLES_WITH_FK[table_name]
         for dependency in TABLE_DEPENDENCIES[table_name]:
+            logging.info("Dependency for table %s found: %s", table_name, dependency)
             self.get_id(row, dependency, level=level+1)
 
         val = self.remote_tables[table_name].loc[self.remote_tables[table_name][table_columns[0]] == row[table_columns[0]]]["id"]
+        logging.info("ID for %s: %s", table_name, val)
         if len(val) == 0:
-            # to_sql not working
-            # row[RDS_TABLES_WITHOUT_FK["botanist"]].to_sql(name="botanist", con=self.conn)
+            logging.info("No value found, adding to table to fetch foreign key ID")
             cur = self.conn.cursor()
             query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
             logging.info("Query constructed: %s", query)
             cur.execute(query)
             self.conn.commit()
+            logging.info("Query executed")
             self.update_table(table_name)
             val = self.remote_tables[table_name].loc[self.remote_tables[table_name][table_columns[0]] == row[table_columns[0]]]["id"]
+            logging.info("Returning newly inserted ID: %s", val)
     
+        logging.info("Returning %s ID for row:", table_name)
+        logging.info(val)
+        logging.info("Value type: %s", type(val))
+        print(val)
         return val
     
 
 
     def check_table_name_valid(self, table_name: str):
+        logging.info("Checking table name %s is valid", table_name)
         if table_name not in RDS_TABLES_WITH_FK:
             raise ValueError(f"Given table name {table_name} is not a known destination")
+        logging.info("Table name OK")
+
 
 
     def close_conn(self):
         """Closes the self-held database connection"""
+        logging.info("Closing RDS connection")
         self.conn.close()
+        logging.info("RDS connection closed")
 
 
 if __name__ == "__main__":
@@ -240,6 +255,11 @@ if __name__ == "__main__":
     ex = transformer.df
     # TODO removals end here
 
+    logging.info("Loading .env")
     dotenv.load_dotenv()
+
+    logging.info("Initialising loader object")
     loader = DataLoader(ex)
+
+    logging.info("Calling upload driver")
     loader.upload_tables_to_rds()
