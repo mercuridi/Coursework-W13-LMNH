@@ -25,7 +25,7 @@ def test_column_names():
     assert column_names == ['plant_id', 'english_name', 'soil_temperature',
                             'latitude', 'longitude', 'city_name', 'country_name',
                             'botanist_name', 'botanist_email', 'botanist_phone',
-                            'last_watered', 'soil_moisture', 'recording_taken', 'image_link', 'scientific_name']
+                            'last_watered', 'soil_moisture', 'reading_taken', 'image_link', 'scientific_name']
 
 
 def test_no_moisture():
@@ -49,7 +49,7 @@ def test_timestamp_is_datetime():
         [{"plant_id": 8, "temperature": 16.29981566929083, "soil_moisture": -5, "recording_taken": "2025-07-22T09:31:22.102Z"}])
     transformer.transform()
     df = transformer.df
-    assert pd.api.types.is_datetime64_any_dtype(df["recording_taken"])
+    assert pd.api.types.is_datetime64_any_dtype(df["reading_taken"])
 
 
 def test_invalid_timestamp_is_handled():
@@ -59,4 +59,4 @@ def test_invalid_timestamp_is_handled():
     df = transformer.df
     assert pd.api.types.is_datetime64_any_dtype(
         df["recording_taken"])  #  column type remains
-    assert pd.isna(df.loc[0, "recording_taken"])  # becomes NaT
+    assert pd.isna(df.loc[0, "reading_taken"])  # becomes NaT
