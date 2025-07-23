@@ -37,6 +37,7 @@ import logging
 
 import dotenv
 import pandas as pd
+import numpy as np
 import pymssql
 
 from transform import PlantDataTransformer
@@ -192,39 +193,49 @@ class DataLoader:
     def upload_tables_to_rds(self):
         """Inserts fresh data into the RDS; skips addition if exact row already exists"""
         logging.info("Adding all rows to the RDS")
-        self.api_data["reading_id"] = self.api_data.apply(lambda x: self.get_id(x, "reading"), axis=1)
+        self.api_data["reading_id"] = self.api_data.apply(lambda x: self.add_row(x, "reading"), axis=1)
         logging.info("Added all rows")
 
-    def get_id(self, row: pd.DataFrame, table_name: str, level=0) -> int:
+    def add_row(self, row: pd.DataFrame, table_name: str, level=0) -> int:
+        """what is kai even smoking"""
         # logging.info("Getting IDs for row %s", row)
+        logging.info("\n\n!!! RECURSION LEVEL: %s", level)
         logging.info("Now searching table %s", table_name)
-        logging.info("!!! RECURSION LEVEL: %s", level)
         table_columns = RDS_TABLES_WITH_FK[table_name]
         for dependency in TABLE_DEPENDENCIES[table_name]:
             logging.info("Dependency for table %s found: %s", table_name, dependency)
-            self.get_id(row, dependency, level=level+1)
+            row[f"{dependency}_id"] = self.add_row(row, dependency, level=level+1)
+            logging.info("Recursion level exited\n")
 
-        val = self.remote_tables[table_name].loc[self.remote_tables[table_name][table_columns[0]] == row[table_columns[0]]]["id"]
-        logging.info("ID for %s: %s", table_name, val)
-        if len(val) == 0:
+        val = self.fetch_id(row, table_name, table_columns)
+        if not isinstance(val, np.int64):
             logging.info("No value found, adding to table to fetch foreign key ID")
             cur = self.conn.cursor()
             query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
-            logging.info("Query constructed: %s", query)
+            logging.info("Query constructed: \n%s", query)
             cur.execute(query)
             self.conn.commit()
             logging.info("Query executed")
             self.update_table(table_name)
-            val = self.remote_tables[table_name].loc[self.remote_tables[table_name][table_columns[0]] == row[table_columns[0]]]["id"]
+            val = self.fetch_id(row, table_name, table_columns)
             logging.info("Returning newly inserted ID: %s", val)
     
-        logging.info("Returning %s ID for row:", table_name)
-        logging.info(val)
+        logging.info("Returning %s ID", table_name)
         logging.info("Value type: %s", type(val))
-        print(val)
+        return val
+
+
+    def fetch_id(self, row, table_name, table_columns):
+        """Wrapper to neatly fetch an ID"""
+        logging.info("Attempting to grab %s ID", table_name)
+        table = self.remote_tables[table_name]
+        try:
+            val = table.loc[table[table_columns[0]] == row[table_columns[0]]]["id"].iloc[0]
+        except IndexError:
+            val = table.loc[table[table_columns[0]] == row[table_columns[0]]]["id"]
+        logging.info("ID for %s: %s", table_name, val)
         return val
     
-
 
     def check_table_name_valid(self, table_name: str):
         logging.info("Checking table name %s is valid", table_name)
