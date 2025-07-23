@@ -31,7 +31,7 @@ class PlantDataTransformer:
                     "last_watered": plant.get("last_watered"),
                     "soil_moisture": plant["soil_moisture"],  # required
                     "reading_taken": plant["recording_taken"],  # required
-                    "image_link": image.get("original_url") if isinstance(image, dict) else None,
+                    "photo_link": image.get("original_url") if isinstance(image, dict) else None,
                     "scientific_name": plant.get("scientific_name")
                 })
             except KeyError:

@@ -171,6 +171,7 @@ class DataLoader:
         logging.info("Loader constructed")
         logging.info(self)
 
+
     def update_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly update a specific local table using RDS data"""
         logging.info("Updating local record of table %s", table_name)
@@ -193,8 +194,15 @@ class DataLoader:
     def upload_tables_to_rds(self):
         """Inserts fresh data into the RDS; skips addition if exact row already exists"""
         logging.info("Adding all rows to the RDS")
-        self.api_data["reading_id"] = self.api_data.apply(lambda x: self.add_row(x, "reading"), axis=1)
+
+        logging.info("Adding rows for reading table")
+        self.api_data.apply(lambda x: self.add_row(x, "reading"), axis=1)
+
+        logging.info("Adding rows for photo table")
+        self.api_data.apply(lambda x: self.add_row(x, "photo"), axis=1)
+
         logging.info("Added all rows")
+
 
     def add_row(self, row: pd.DataFrame, table_name: str, level=0) -> int:
         """what is kai even smoking"""
@@ -205,23 +213,28 @@ class DataLoader:
         for dependency in TABLE_DEPENDENCIES[table_name]:
             logging.info("Dependency for table %s found: %s", table_name, dependency)
             row[f"{dependency}_id"] = self.add_row(row, dependency, level=level+1)
-            logging.info("Recursion level exited\n")
 
         val = self.fetch_id(row, table_name, table_columns)
         if not isinstance(val, np.int64):
             logging.info("No value found, adding to table to fetch foreign key ID")
-            cur = self.conn.cursor()
+
+            logging.info("Constructing query")
             query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
             logging.info("Query constructed: \n%s", query)
+
+            cur = self.conn.cursor()
             cur.execute(query)
             self.conn.commit()
             logging.info("Query executed")
+
             self.update_table(table_name)
             val = self.fetch_id(row, table_name, table_columns)
             logging.info("Returning newly inserted ID: %s", val)
     
         logging.info("Returning %s ID", table_name)
         logging.info("Value type: %s", type(val))
+        logging.info("End of recursion level %s\n", level)
+
         return val
 
 
@@ -230,19 +243,28 @@ class DataLoader:
         logging.info("Attempting to grab %s ID", table_name)
         table = self.remote_tables[table_name]
         try:
+            # "Expected" behaviour
             val = table.loc[table[table_columns[0]] == row[table_columns[0]]]["id"].iloc[0]
         except IndexError:
+            # I think happens when the target is an integer?
             val = table.loc[table[table_columns[0]] == row[table_columns[0]]]["id"]
+            logging.info("Error handled: value is not in a series")
+        except KeyError:
+            # happens when the database is completely empty
+            val = 0
+            logging.info("Error handled: database table is empty")
+
+
         logging.info("ID for %s: %s", table_name, val)
         return val
     
 
     def check_table_name_valid(self, table_name: str):
+        """Check if a table name is in the list of known tables before we try to query it"""
         logging.info("Checking table name %s is valid", table_name)
         if table_name not in RDS_TABLES_WITH_FK:
             raise ValueError(f"Given table name {table_name} is not a known destination")
         logging.info("Table name OK")
-
 
 
     def close_conn(self):
@@ -262,9 +284,11 @@ if __name__ == "__main__":
 
     # TODO remove this for PR
     transformer = PlantDataTransformer(EXAMPLE)
-    transformer.create_dataframe()
+    transformer.transform()
     ex = transformer.df
     # TODO removals end here
+
+    logging.info(ex)
 
     logging.info("Loading .env")
     dotenv.load_dotenv()
