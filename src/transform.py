@@ -30,8 +30,8 @@ class PlantDataTransformer:
                     "botanist_phone": plant.get("botanist", {}).get("phone"),
                     "last_watered": plant.get("last_watered"),
                     "soil_moisture": plant["soil_moisture"],  # required
-                    "recording_taken": plant["recording_taken"],  # required
-                    "image_link": image.get("original_url") if isinstance(image, dict) else None,
+                    "reading_taken": plant["recording_taken"],  # required
+                    "photo_link": image.get("original_url") if isinstance(image, dict) else None,
                     "scientific_name": plant.get("scientific_name")
                 })
             except KeyError:
@@ -43,7 +43,7 @@ class PlantDataTransformer:
         """Clean the dataframe (e.g. handle nulls, ensure correct data types)"""
 
         # Ensure timestamps are datetime objects, coercing errors to NaN
-        for col in ['last_watered', 'recording_taken']:
+        for col in ['last_watered', 'reading_taken']:
             if col in self.df.columns:
                 self.df[col] = pd.to_datetime(self.df[col], errors='coerce')
 
@@ -54,7 +54,7 @@ class PlantDataTransformer:
         # If scientific_name is always in a list on its own
         if 'scientific_name' in self.df.columns:
             self.df['scientific_name'] = self.df['scientific_name'].apply(
-                lambda x: x[0] if isinstance(x, list) and x else x)
+                lambda x: x[0].replace("'", '"') if isinstance(x, list) and x else x)
 
         # Replace negative moisture with null
         self.df['soil_moisture'] = self.df['soil_moisture'].mask(
