@@ -1,3 +1,3 @@
 # pylint: skip-file
 
-from load import *
+from src.load import *
