@@ -1,12 +1,16 @@
 '''Receiving dictionary with keys containing table names, 
 and values containing dataframes of the tables' data'''
+from datetime import datetime
 import pandas as pd
 import boto3
 import awswrangler as wr
+import pymssql
+import os
 
 BUCKET = ""
 METADATA_TABLE_NAMES = ['plant', 'botanist', 'photo',
                         'origin', 'city', 'country']
+DATABASE = ""
 
 
 def upload_metadata(bucket: str, table_name: str, df: pd.DataFrame, session: boto3.Session):
@@ -47,6 +51,54 @@ def upload_summary_data(bucket: str, df: pd.DataFrame, session: boto3.Session):
     print(f'Summaries uploaded to {bucket}, bucket!')
 
 
+def get_latest_reading_taken(bucket: str, database: str, session: boto3.Session) -> str:
+    query = f"SELECT MAX(reading_taken) AS latest FROM reading"
+
+    df = wr.athena.read_sql_query(
+        sql=query,
+        database=database,
+        ctas_approach=False,  # just need the result
+        s3_output=f's3://{bucket}/output',
+        boto3_session=session
+    )
+
+    latest = df.loc[0, 'latest']
+
+    # ensuring the correct format is returned as a string
+    if isinstance(latest, pd.Timestamp):
+        return latest.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        return str(latest)
+
+
+def get_connection():
+    """connects to db"""
+    conn = pymssql.connect(
+        os.environ["DB_HOST"],
+        os.environ["DB_USER"],
+        os.environ["DB_PASSWORD"],
+        os.environ["DB_NAME"]
+    )
+    return conn
+
+
+def delete_old_readings(connection, latest_reading_taken):
+    timestamp = datetime.strptime(latest_reading_taken, "%Y-%m-%d %H:%M:%S")
+
+    cursor = connection.cursor()
+
+    delete_query = """DELETE FROM reading
+                    WHERE reading_taken < %s"""
+
+    cursor.execute(delete_query, (timestamp,))
+    deleted_count = cursor.rowcount
+
+    connection.commit()
+    cursor.close()
+
+    return deleted_count
+
+
 def load(bucket: str, df_dict: dict[str, pd.DataFrame]):
     session = boto3.Session()
     creds = session.get_credentials()
@@ -58,3 +110,12 @@ def load(bucket: str, df_dict: dict[str, pd.DataFrame]):
 
     upload_reading_data(bucket, df_dict['reading'], session)
     upload_summary_data(bucket, df_dict['summary'], session)
+
+    # clean up
+    latest = get_latest_reading_taken(BUCKET, DATABASE, session)
+    print(f"Latest reading_taken in S3: {latest}")
+
+    connection = get_connection()
+    deleted = delete_old_readings(connection, latest)
+    connection.close()
+    print(f"Deleted {deleted} rows from RDS older than {latest}")
