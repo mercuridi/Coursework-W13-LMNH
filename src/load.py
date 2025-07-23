@@ -6,8 +6,6 @@ import pandas as pd
 import numpy as np
 import pymssql
 
-from transform import PlantDataTransformer
-
 # expose the ERD as a dictionary
 RDS_TABLES_WITH_FK = {
     "country": [
