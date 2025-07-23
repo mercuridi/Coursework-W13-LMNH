@@ -20,7 +20,3 @@ def handler(event, context):
         return {"statusCode": 200}
     except Exception as e:
         return {"statusCode": 500, "error": str(e)}
-
-
-if __name__ == "__main__":
-    run_pipeline()
