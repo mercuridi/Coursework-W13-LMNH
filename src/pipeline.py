@@ -1,6 +1,7 @@
 '''runs full pipeline'''
-from extract_script import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
+from extract import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
 from transform import PlantDataTransformer
+from load import DataLoader, RDS_TABLES_WITH_FK, TABLE_DEPENDENCIES
 
 
 def run_pipeline():
