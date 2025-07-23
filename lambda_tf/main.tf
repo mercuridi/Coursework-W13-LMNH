@@ -49,9 +49,19 @@ resource "aws_lambda_function" "image_lambda" {
 
   image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-james-lambda:latest" # WAITING FOR IMAGE TO BE PUSHED
 
-  timeout       = 30
-  memory_size   = 256
+  timeout       = 60
+  memory_size   = 512
 
+  environment {
+    variables = {
+      DB_HOST     = var.DB_HOST
+      DB_PORT     = var.DB_PORT
+      DB_USER     = var.DB_USER
+      DB_PASSWORD = var.DB_PASSWORD
+      DB_NAME     = var.DB_NAME
+      DB_SCHEMA   = var.DB_SCHEMA
+    }
+  }
   vpc_config {
     subnet_ids         = var.public_subnet_ids
     security_group_ids = [aws_security_group.lambda_sg.id]
