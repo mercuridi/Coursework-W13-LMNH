@@ -4,7 +4,7 @@ provider "aws" {
 
 # S3 Bucket
 resource "aws_s3_bucket" "c18_botanists_bucket" {
-  bucket = "c18-botanists-s3"
+  bucket = "c18-botanists-s3-bucket"
 }
 
 resource "aws_s3_bucket_versioning" "versioning" {
