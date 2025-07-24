@@ -1,5 +1,5 @@
 """Script to load cleaned data into the SQL Server RDS"""
-import os 
+import os
 import logging
 
 import pandas as pd
@@ -90,19 +90,19 @@ class DataLoader:
         self.remote_tables: dict[pd.DataFrame] = {}
         self.update_tables()
         logging.info("Loader constructed")
-        logging.info(self)
+        logging.debug(self)
 
 
     def update_table(self, table_name: str) -> pd.DataFrame:
         """Function to quickly update a specific local table using RDS data"""
         self.check_table_name_valid(table_name)
-        logging.info("Updating local record of table %s", table_name)
+        logging.debug("Updating local record of table %s", table_name)
         cur = self.conn.cursor(as_dict=True)
         cur.execute(f"select * from {table_name};")
         data = pd.DataFrame(cur.fetchall())
         cur.close()
         self.remote_tables[table_name] = data
-        logging.info("Table record updated")
+        logging.debug("Table record updated")
 
 
     def update_tables(self):
@@ -116,61 +116,64 @@ class DataLoader:
         """Inserts fresh data into the RDS; skips addition if exact row already exists"""
         logging.info("Adding all rows to the RDS")
 
-        logging.info("Adding rows for reading table")
+        logging.debug("Adding rows for reading table")
         self.api_data.apply(lambda x: self.add_row(x, "reading"), axis=1)
 
-        logging.info("Adding rows for photo table")
+        logging.debug("Adding rows for photo table")
         self.api_data.apply(lambda x: self.add_row(x, "photo"), axis=1)
 
         logging.info("Added all rows")
 
+        self.close_conn()
+
 
     def add_row(self, row: pd.DataFrame, table_name: str, level=0) -> int:
         """Adds a single row of data to a remote table"""
-        # logging.info("Getting IDs for row %s", row)
-        logging.info("\n\n!!! RECURSION LEVEL: %s", level)
-        logging.info("Now searching table %s", table_name)
+        # logging.debug("Getting IDs for row %s", row)
+        logging.debug("!!! RECURSION LEVEL: %s", level)
+        logging.debug("Now searching table %s", table_name)
         table_columns = RDS_TABLES_WITH_FK[table_name]
         for dependency in TABLE_DEPENDENCIES[table_name]:
-            logging.info("Dependency for table %s found: %s", table_name, dependency)
+            logging.debug("Dependency for table %s found: %s", table_name, dependency)
             row[f"{dependency}_id"] = self.add_row(row, dependency, level=level+1)
 
         val = self.fetch_id(row, table_name, table_columns)
         if not isinstance(val, np.int64):
-            logging.info("No value found, adding to table to fetch foreign key ID")
+            logging.debug("No value found, adding to table to fetch foreign key ID")
 
-            logging.info("Constructing query")
-            simulated_query = f"insert into {table_name} ({', '.join(table_columns)}) values ('{'\', \''.join([str(row[k]) for k in table_columns])}');"
-            logging.info("Query constructed: \n%s", simulated_query)
-            logging.info("NOTE: The above query is not what is being executed.")
-            logging.info("NOTE: The executed query is properly sanitised with query parameters.")
+            logging.debug("Constructing query")
+            query_string = f"insert into {table_name} ({', '.join(table_columns)}) values ({', '.join(['%s' for _ in range(len(table_columns))])});"
+            logging.debug("Query string:")
+            logging.debug(query_string)
 
+            logging.debug("Constructing params")
+            query_params = [str(row[k]) if str(row[k]) != "nan" else "NULL" for k in table_columns]
+            logging.debug("Params for query:")
+            logging.debug(query_params)
+
+            logging.debug("Executing query")
             cur = self.conn.cursor()
             cur.execute(
-                "insert into %s (%s) values ('%s');",
-                (
-                    table_name,
-                    ', '.join(table_columns),
-                    '\', \''.join([str(row[k]) for k in table_columns])
-                )
+                operation=query_string,
+                params=query_params
             )
             self.conn.commit()
-            logging.info("Query executed")
+            logging.debug("Query executed")
 
             self.update_table(table_name)
             val = self.fetch_id(row, table_name, table_columns)
-            logging.info("Returning newly inserted ID: %s", val)
-    
-        logging.info("Returning %s ID", table_name)
-        logging.info("Value type: %s", type(val))
-        logging.info("End of recursion level %s\n", level)
+            logging.debug("Returning newly inserted ID: %s", val)
+
+        logging.debug("Returning %s ID", table_name)
+        logging.debug("Value type: %s", type(val))
+        logging.debug("End of recursion level %s", level)
 
         return val
 
 
-    def fetch_id(self, row, table_name, table_columns):
+    def fetch_id(self, row: pd.DataFrame, table_name: str, table_columns: list[str]) -> int:
         """Wrapper to neatly fetch an ID"""
-        logging.info("Attempting to grab %s ID", table_name)
+        logging.debug("Attempting to grab %s ID", table_name)
         table = self.remote_tables[table_name]
         try:
             # "Expected" behaviour
@@ -178,23 +181,26 @@ class DataLoader:
         except IndexError:
             # I think happens when the target is an integer?
             val = table.loc[table[table_columns[0]] == row[table_columns[0]]]["id"]
-            logging.info("Error handled: value is not in a series OR column is empty")
+            logging.debug("Error handled: value is not in a series OR column is empty")
         except KeyError:
             # happens when the database is completely empty
             val = 0
-            logging.info("Error handled: database table is empty AND/OR column does not exist")
+            logging.debug("Error handled: database table is empty AND/OR column does not exist")
 
+        if isinstance(val, pd.Series):
+            val = 0
+            logging.debug("Value found is a series; returning 0")
 
-        logging.info("ID for %s: %s", table_name, val)
+        logging.debug("ID for %s: %s", table_name, val)
         return val
     
 
     def check_table_name_valid(self, table_name: str):
         """Check if a table name is in the list of known tables before we try to query it"""
-        logging.info("Checking table name %s is valid", table_name)
+        logging.debug("Checking table name %s is valid", table_name)
         if table_name not in RDS_TABLES_WITH_FK:
             raise ValueError(f"Given table name {table_name} is not a known destination")
-        logging.info("Table name OK")
+        logging.debug("Table name OK")
 
 
     def close_conn(self):
