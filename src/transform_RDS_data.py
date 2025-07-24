@@ -13,26 +13,38 @@ class TransformRDSData:
         """create summary dataframe"""
         self.readings['reading_taken'] = pd.to_datetime(
             self.readings['reading_taken'])
+
         self.readings['last_watered'] = pd.to_datetime(
             self.readings['last_watered'])
+
         self.readings['reading_date'] = self.readings['reading_taken'].dt.date
         self.readings['watered_date'] = self.readings['last_watered'].dt.date
+
         means = self.readings.groupby('plant_id')[
-            ['soil_moisture', 'soil_temperature']].mean().rename(columns={'soil_moisture': 'mean_soil_moisture', 'soil_temperature': 'mean_soil_temperature'})
+            ['soil_moisture', 'soil_temperature']].mean().rename(
+                columns={'soil_moisture': 'mean_soil_moisture', 'soil_temperature': 'mean_soil_temperature'})
+
         date = self.readings.groupby('plant_id')['reading_taken'].first(
         ).reset_index().rename(columns={'reading_taken': 'date'})
+
         watered_on_the_day = self.readings[self.readings['watered_date']
                                            == self.readings['reading_date']]
+
         watering_count = watered_on_the_day.groupby(
             'plant_id')['last_watered'].nunique()
+
         watering_count = watering_count.reset_index().rename(
             columns={'last_watered': 'watering_count'})
+
         most_recent = self.readings.groupby('plant_id')['last_watered'].max(
         ).reset_index().rename(columns={'last_watered': 'most_recent'})
+
         summary = means.merge(date, on='plant_id', how='left').merge(
             watering_count, on='plant_id', how='left').merge(most_recent, on='plant_id', how='left')
+
         summary['watering_count'] = summary['watering_count'].fillna(
             0).astype(int)
+
         return summary
 
     def transformed_data(self):

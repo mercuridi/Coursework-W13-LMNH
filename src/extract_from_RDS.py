@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 
 class RDSDataGetter:
-    """get's data from RDS"""
+    """gets data from RDS"""
     METADATA_TABLES = ['botanist', 'country',
                        'city', 'origin', 'photo', 'plant']
 
@@ -20,7 +20,7 @@ class RDSDataGetter:
         )
 
     def get_metadata(self) -> dict[pd.DataFrame]:
-        """get's all metadata tables"""
+        """gets all metadata tables"""
         conn = self.conn
         cursor = conn.cursor()
         df_dict = {}
@@ -37,14 +37,16 @@ class RDSDataGetter:
         return df_dict
 
     def get_readings(self) -> dict[pd.DataFrame]:
-        """get's reading table from yesterday and closes connection"""
+        """gets reading table from yesterday and closes connection"""
         conn = self.conn
         cursor = conn.cursor()
         df_dict = {}
         try:
-            query = """SELECT * FROM reading
-                WHERE reading_taken >= CAST(DATEADD(DAY, -1, CAST(GETDATE() AS DATE)) AS DATETIME)
-                AND reading_taken < CAST(GETDATE() AS DATE);"""
+            query = """
+            SELECT * FROM reading
+            WHERE reading_taken >= CAST(DATEADD(DAY, -1, CAST(GETDATE() AS DATE)) AS DATETIME)
+            AND reading_taken < CAST(GETDATE() AS DATE);
+            """
             cursor.execute(query)
             rows = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
@@ -56,7 +58,7 @@ class RDSDataGetter:
         return df_dict
 
     def get_all_data(self) -> dict[pd.DataFrame]:
-        """get's all data """
+        """gets all data """
         meta = self.get_metadata()
         readings = self.get_readings()
         meta.update(readings)
