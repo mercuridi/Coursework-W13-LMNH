@@ -1,0 +1,9 @@
+FROM python:3.13
+WORKDIR /src/pipeline_2
+
+COPY ../../requirements.txt ./
+RUN pip3 install -r requirements.txt
+
+COPY pipeline.py ./
+
+CMD python3 ./pipeline.py

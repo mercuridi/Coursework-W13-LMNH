@@ -1,6 +1,6 @@
 '''runs full pipeline'''
-from extract_script import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
-from transform import PlantDataTransformer
+from pipeline_1.extract_script import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
+from pipeline_1.transform import PlantDataTransformer
 
 
 def run_pipeline():

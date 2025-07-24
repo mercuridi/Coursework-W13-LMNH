@@ -1,5 +1,5 @@
 # pylint: skip-file
-from src.transform import PlantDataTransformer
+from src.pipeline_1.transform import PlantDataTransformer
 import pandas as pd
 import pytest
 
