@@ -40,7 +40,7 @@ def run_pipeline(terminal_output=False):
     # extract
     extract_start = datetime.datetime.now()
     getter = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
-    plants = getter.loop_ids()
+    plants = getter.loop_ids_multi_threaded()
     extract_end = datetime.datetime.now()
     logging.info("Finished execution of extract at %s", extract_end)
     logging.info("Extract timer: %s", extract_end-extract_start)
@@ -78,3 +78,6 @@ def handler(event, context):
         return {"statusCode": 200}
     except Exception as e:
         return {"statusCode": 500, "error": str(e)}
+
+if __name__ == "__main__":
+    run_pipeline()

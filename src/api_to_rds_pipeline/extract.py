@@ -1,10 +1,13 @@
 """Extract plant data from endpoints"""
 import requests
 import logging
+from multiprocessing import Pool
 
 BASE_ENDPOINT = "https://sigma-labs-bot.herokuapp.com/api/plants/"
 START_ID = 1
 MAX_404_ERRORS = 5
+MAX_ID = 100
+MAX_THREADS = 5
 
 class PlantGetter:
     """Gets plant data from different endpoints"""
@@ -16,6 +19,7 @@ class PlantGetter:
         self.max_404 = max_404
         self.consecutive_404 = 0
         self.plant_data = []
+        self.endpoints = [i for i in range(START_ID, MAX_ID)]
         logging.info("Getter constructed")
         logging.info("Max consecutive 404s: %s", self.max_404)
 
@@ -37,9 +41,9 @@ class PlantGetter:
             logging.error("Endpoint request exception")
             return {"error": "Request Exception", "id": id}
 
-    def loop_ids(self) -> list[dict]:
+    def loop_ids_single_threaded(self) -> list[dict]:
         """Loops through endpoints, stopping after a certain number of failed requests"""
-        logging.info("Looping over IDs")
+        logging.info("Looping over IDs - single-thread")
         while self.consecutive_404 < self.max_404:
             data = self.get_plant(self.id)
             logging.debug("Obtained data: %s", data)
@@ -54,8 +58,22 @@ class PlantGetter:
             logging.debug("Next endpoint ID: %s", self.id)
         logging.info("Finished looping IDs")
         return self.plant_data
-
+    
+    def loop_ids_multi_threaded(self) -> list[dict]:
+        """Loops through endpoints with a multithreaded approach"""
+        logging.info("Looping over IDs - multi-threaded")
+        with Pool(MAX_THREADS) as p:
+            result = p.map(self.get_plant, self.endpoints)
+        logging.info("Finished looping IDs")
+        self.plant_data = result
+        return self.plant_data
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        filename="logs/extract.log",
+        filemode="w",
+        encoding="utf8"
+    )
     getter = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
-    plants = getter.loop_ids()
+    plants = getter.loop_ids_multi_threaded()
