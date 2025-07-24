@@ -22,3 +22,5 @@ pandas
 requests
 requests-mock
 pymssql
+boto3
+awswrangler
