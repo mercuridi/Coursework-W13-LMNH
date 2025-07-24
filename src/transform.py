@@ -63,6 +63,9 @@ class PlantDataTransformer:
         # Replace temperatures outside of valid range with null
         self.df['soil_temperature'] = self.df['soil_temperature'].mask(
             (self.df['soil_temperature'] < -10) | (self.df['soil_temperature'] > 60))
+        
+        # Drop rows which have a null value for moisture or temperature
+        self.df = self.df.dropna(subset=['soil_temperature', 'soil_moisture'])
 
     def transform(self) -> pd.DataFrame:
         """Full transformation process and returns the datafram"""

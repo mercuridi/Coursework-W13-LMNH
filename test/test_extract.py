@@ -1,5 +1,5 @@
 # pylint: skip-file
-from src.extract_script import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
+from src.extract import PlantGetter, BASE_ENDPOINT, START_ID, MAX_404_ERRORS
 import requests
 
 
