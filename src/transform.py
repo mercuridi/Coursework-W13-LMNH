@@ -86,7 +86,6 @@ class PlantDataTransformer:
         # Replace temperatures outside of valid range with null
         self.df['soil_temperature'] = self.df['soil_temperature'].mask(
             (self.df['soil_temperature'] < -10) | (self.df['soil_temperature'] > 60))
-        start_length = len(self.df)
         logging.info("Replaced unusual temperature values with null")
 
         
