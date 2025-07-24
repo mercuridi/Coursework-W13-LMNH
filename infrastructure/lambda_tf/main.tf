@@ -4,7 +4,7 @@ provider "aws" {
 
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "c18-james-lambda-exec-role"
+  name = "c18-botanists-lambda-exec-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_execution" {
 
 # Security group for Lambda
 resource "aws_security_group" "lambda_sg" {
-  name        = "c18-james-lambda-sg"
+  name        = "c18-botanists-lambda-sg"
   description = "Allow Lambda to connect to RDS SQL Server"
   vpc_id      = var.vpc_id
 
@@ -43,7 +43,7 @@ resource "aws_security_group" "lambda_sg" {
 
 # Lambda Function from ECR Image
 resource "aws_lambda_function" "image_lambda" {
-  function_name = "c18-james-etl-lambda"
+  function_name = "c18-botanists-etl-lambda"
   role          = aws_iam_role.lambda_exec_role.arn
   package_type  = "Image"
 
@@ -70,7 +70,7 @@ resource "aws_lambda_function" "image_lambda" {
 
 # IAM Role for EventBridge Scheduler
 resource "aws_iam_role" "eventbridge_scheduler_role" {
-  name = "c18-james-scheduler-role"
+  name = "c18-botanists-scheduler-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -85,7 +85,7 @@ resource "aws_iam_role" "eventbridge_scheduler_role" {
 }
 
 resource "aws_iam_role_policy" "scheduler_invoke_lambda" {
-  name = "c18-james-scheduler-policy"
+  name = "c18-botanists-scheduler-policy"
   role = aws_iam_role.eventbridge_scheduler_role.id
 
   policy = jsonencode({
@@ -100,7 +100,7 @@ resource "aws_iam_role_policy" "scheduler_invoke_lambda" {
 
 # EventBridge Schedule (disabled at first)
 resource "aws_scheduler_schedule" "lambda_every_minute" {
-  name       = "c18-james-lambda-schedule"
+  name       = "c18-botanists-lambda-schedule"
   group_name = "default"
 
   schedule_expression = "rate(1 minute)"
