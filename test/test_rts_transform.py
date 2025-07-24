@@ -3,8 +3,7 @@
 import pandas as pd
 import pytest
 
-from src.transform_RDS_data import TransformRDSData
-
+from src.rds_to_s3_pipeline.transform import TransformRDSData
 
 @pytest.fixture
 def sample_df_dict():
