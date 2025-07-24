@@ -24,14 +24,14 @@ class PlantGetter:
         if it was not a successful request"""
         logging.debug("Constructing endpoint")
         endpoint = f'{self.url}{id}'
-        logging.debug("Getting plant from endpoint: %s", endpoint)
+        logging.debug("Getting plant ID %s from endpoint: %s", id, endpoint)
         try:
             response = requests.get(endpoint, timeout=10)
 
             if response.status_code == 200:
                 data = response.json()
                 return data
-            logging.error("Endpoint 404 error")
+            logging.error("Endpoint 404 error at ID %s", id)
             return {"error": "404 Not Found", "id": id}
         except requests.exceptions.RequestException:
             logging.error("Endpoint request exception")
@@ -49,7 +49,7 @@ class PlantGetter:
                 self.consecutive_404 = 0
             else:
                 self.consecutive_404 += 1
-                logging.debug("Consecutive 404s: %s", self.consecutive_404)
+                logging.error("Consecutive 404s: %s", self.consecutive_404)
             self.id += 1
             logging.debug("Next endpoint ID: %s", self.id)
         logging.info("Finished looping IDs")
