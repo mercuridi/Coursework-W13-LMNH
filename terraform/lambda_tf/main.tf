@@ -47,7 +47,7 @@ resource "aws_lambda_function" "image_lambda" {
   role          = aws_iam_role.lambda_exec_role.arn
   package_type  = "Image"
 
-  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-git-botanists-etl-repo"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-git-botanists-etl-repo:latest"
 
   timeout       = 60
   memory_size   = 512
