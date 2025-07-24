@@ -1,6 +1,6 @@
 """complete pipeline"""
-from extract import RDSDataGetter
-from transform import TransformRDSData
+from src.rds_to_s3_pipeline.extract import RDSDataGetter
+from src.rds_to_s3_pipeline.transform import TransformRDSData
 
 
 def run_pipeline():
