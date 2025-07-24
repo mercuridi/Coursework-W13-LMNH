@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 import pandas as pd
 import pytest
 
