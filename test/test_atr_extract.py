@@ -36,7 +36,7 @@ def test_loop_stops_after_5_404s(requests_mock):
         requests_mock.get(f"{BASE_ENDPOINT}{i}", status_code=404, json={
                           'id': f"{i}", "error": "not found"})
     pg = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
-    data = pg.loop_ids()
+    data = pg.loop_ids_single_threaded()
     ids = [plant['id'] for plant in data]
     assert len(data) == 3
     assert ids == ['1', '2', '3']
@@ -58,7 +58,7 @@ def test_loop_continues_after_1_404(requests_mock):
         requests_mock.get(f"{BASE_ENDPOINT}{i}", status_code=404, json={
                           'id': f"{i}", "error": "not found"})
     pg = PlantGetter(BASE_ENDPOINT, START_ID, MAX_404_ERRORS)
-    data = pg.loop_ids()
+    data = pg.loop_ids_single_threaded()
     ids = [plant['id'] for plant in data]
     assert len(data) == 5
     assert ids == ['1', '2', '3', '5', '6']
