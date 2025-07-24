@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "eu-west-1"
+  region = "eu-west-2"
 }
 
 # S3 Bucket
@@ -53,9 +53,6 @@ resource "aws_iam_role_policy" "glue_inline_permissions" {
           "glue:UpdateTable",
           "glue:GetTable",
           "glue:GetTables",
-          "glue:CreateDatabase",
-          "glue:GetDatabase",
-          "glue:GetDatabases"
         ],
         Resource = "*"
       },
