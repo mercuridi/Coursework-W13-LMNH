@@ -1,6 +1,6 @@
 """complete pipeline"""
-from pipeline_2.extract import RDSDataGetter
-from pipeline_2.transform import TransformRDSData
+from extract import RDSDataGetter
+from transform import TransformRDSData
 
 
 def run_pipeline():
