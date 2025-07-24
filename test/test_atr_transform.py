@@ -1,7 +1,8 @@
 # pylint: skip-file
-from src.transform import PlantDataTransformer
 import pandas as pd
 import pytest
+
+from src.api_to_rds_pipeline.transform import PlantDataTransformer
 
 EXAMPLE = [{"plant_id": 8, "name": "Bird of paradise", "temperature": 16.29981566929083,
            "origin_location": {"latitude": 54.1635, "longitude": 8.6662, "city": "Edwardfurt", "country": "Liberia"},
