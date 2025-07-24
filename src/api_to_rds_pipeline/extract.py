@@ -6,7 +6,7 @@ from multiprocessing import Pool
 BASE_ENDPOINT = "https://sigma-labs-bot.herokuapp.com/api/plants/"
 START_ID = 1
 MAX_404_ERRORS = 5
-MAX_ID = 50
+MAX_ID = 100
 MAX_THREADS = 5
 
 class PlantGetter:
