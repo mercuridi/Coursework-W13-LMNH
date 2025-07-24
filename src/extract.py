@@ -10,13 +10,13 @@ class PlantGetter:
     """Gets plant data from different endpoints"""
 
     def __init__(self, url: str, start: int, max_404: int):
-        logging.debug("Constructing getter class")
+        logging.info("Constructing getter class")
         self.url = url
         self.id = start
         self.max_404 = max_404
         self.consecutive_404 = 0
         self.plant_data = []
-        logging.debug("Getter constructed")
+        logging.info("Getter constructed")
         logging.info("Max consecutive 404s: %s", self.max_404)
 
     def get_plant(self, id: int) -> dict:
