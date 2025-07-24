@@ -6,6 +6,9 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
+COPY src/api_to_rds_pipeline/extract.py .
+COPY src/api_to_rds_pipeline/transform.py .
+COPY src/api_to_rds_pipeline/load.py .
 COPY src/api_to_rds_pipeline/pipeline.py .
 
 CMD ["pipeline.handler"]
