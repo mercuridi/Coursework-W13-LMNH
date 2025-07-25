@@ -1,7 +1,9 @@
 """Extract plant data from endpoints"""
-import requests
 import logging
 from multiprocessing import Pool
+
+import requests
+
 
 BASE_ENDPOINT = "https://sigma-labs-bot.herokuapp.com/api/plants/"
 START_ID = 1

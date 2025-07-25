@@ -1,10 +1,8 @@
 """Script to load cleaned data into the SQL Server RDS"""
-import os
 import logging
 
 import pandas as pd
 import numpy as np
-import pymssql
 
 from src.utils.utils import get_conn
 
@@ -139,7 +137,10 @@ class DataLoader:
             logging.debug("No value found, adding to table to fetch foreign key ID")
 
             logging.debug("Constructing query")
-            query_string = f"insert into {table_name} ({', '.join(table_columns)}) values ({', '.join(['%s' for _ in range(len(table_columns))])});"
+            query_string = f"""
+            INSERT INTO {table_name} ({', '.join(table_columns)})
+            VALUES ({', '.join(['%s' for _ in range(len(table_columns))])});
+            """
             logging.debug("Query string:")
             logging.debug(query_string)
 
@@ -190,7 +191,7 @@ class DataLoader:
 
         logging.debug("ID for %s: %s", table_name, val)
         return val
-    
+
 
     def check_table_name_valid(self, table_name: str):
         """Check if a table name is in the list of known tables before we try to query it"""

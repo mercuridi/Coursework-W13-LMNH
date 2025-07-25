@@ -8,5 +8,5 @@ def run_pipeline():
     getter = RDSDataGetter()
     tables = getter.get_all_data()
     transformer = TransformRDSData(tables)
-    transformed = transformer.transformed_data()
+    _ = transformer.transformed_data()
     # add load
