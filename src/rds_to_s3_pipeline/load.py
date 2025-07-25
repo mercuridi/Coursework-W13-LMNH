@@ -8,10 +8,10 @@ import boto3
 import awswrangler as wr
 import pymssql
 
-BUCKET = ""
+BUCKET = "c18-botanists-s3-bucket "
 METADATA_TABLE_NAMES = ['plant', 'botanist', 'photo',
                         'origin', 'city', 'country']
-DATABASE = ""
+DATABASE = "c18_botanists_db"
 
 
 class DataLoader:
