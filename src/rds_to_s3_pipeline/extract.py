@@ -19,7 +19,7 @@ class RDSDataGetter:
             os.environ["DB_NAME"]
         )
 
-    def get_metadata(self) -> dict[pd.DataFrame]:
+    def get_metadata(self) -> dict[str, pd.DataFrame]:
         """gets all metadata tables"""
         conn = self.conn
         cursor = conn.cursor()
@@ -36,7 +36,7 @@ class RDSDataGetter:
             cursor.close()
         return df_dict
 
-    def get_readings(self) -> dict[pd.DataFrame]:
+    def get_readings(self) -> dict[str, pd.DataFrame]:
         """gets reading table from yesterday and closes connection"""
         conn = self.conn
         cursor = conn.cursor()
@@ -57,7 +57,7 @@ class RDSDataGetter:
             conn.close()
         return df_dict
 
-    def get_all_data(self) -> dict[pd.DataFrame]:
+    def get_all_data(self) -> dict[str, pd.DataFrame]:
         """gets all data """
         meta = self.get_metadata()
         readings = self.get_readings()

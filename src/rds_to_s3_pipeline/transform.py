@@ -5,7 +5,7 @@ import pandas as pd
 class TransformRDSData:
     """class to transform data to include summary"""
 
-    def __init__(self, df_dict: dict[pd.DataFrame]):
+    def __init__(self, df_dict: dict[str, pd.DataFrame]):
         self.df_dict = df_dict
         self.readings = df_dict.get('reading')
 
