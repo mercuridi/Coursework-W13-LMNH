@@ -2,10 +2,13 @@ FROM public.ecr.aws/lambda/python:3.13
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-COPY ../requirements.txt .
+COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY pipeline.py .
+COPY src/api_to_rds_pipeline/extract.py .
+COPY src/api_to_rds_pipeline/transform.py .
+COPY src/api_to_rds_pipeline/load.py .
+COPY src/api_to_rds_pipeline/pipeline.py .
 
 CMD ["pipeline.handler"]

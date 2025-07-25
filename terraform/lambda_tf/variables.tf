@@ -4,7 +4,12 @@ variable "vpc_id" {
 }
 
 variable "public_subnet_ids" {
-  description = "Public subnet IDs for Lambda"
+  description = "Public subnet IDs for NAT Gateway"
+  type        = list(string)
+}
+
+variable "private_subnet_ids" {
+  description = "Private subnet IDs to host Lambda"
   type        = list(string)
 }
 

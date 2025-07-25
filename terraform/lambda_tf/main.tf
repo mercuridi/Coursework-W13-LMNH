@@ -47,7 +47,7 @@ resource "aws_lambda_function" "image_lambda" {
   role          = aws_iam_role.lambda_exec_role.arn
   package_type  = "Image"
 
-  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-git-botanists-etl-repo"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-git-botanists-etl-repo:latest"
 
   timeout       = 60
   memory_size   = 512
@@ -63,7 +63,7 @@ resource "aws_lambda_function" "image_lambda" {
     }
   }
   vpc_config {
-    subnet_ids         = var.public_subnet_ids
+    subnet_ids         = var.private_subnet_ids
     security_group_ids = [aws_security_group.lambda_sg.id]
   }
 }
@@ -104,7 +104,7 @@ resource "aws_scheduler_schedule" "lambda_every_minute" {
   group_name = "default"
 
   schedule_expression = "rate(1 minute)"
-  state               = "DISABLED"  # Change to ENABLED once ready
+  state               = "ENABLED"  # Change to ENABLED once ready
 
   flexible_time_window {
     mode = "OFF"
@@ -114,4 +114,36 @@ resource "aws_scheduler_schedule" "lambda_every_minute" {
     arn      = aws_lambda_function.image_lambda.arn
     role_arn = aws_iam_role.eventbridge_scheduler_role.arn
   }
+}
+
+# Getting Lambda internet access
+data "aws_internet_gateway" "existing_igw" {
+  filter {
+    name   = "attachment.vpc-id"
+    values = [var.vpc_id]
+  }
+}
+
+resource "aws_eip" "nat_eip" {
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = element(var.public_subnet_ids, 0)
+  depends_on    = [data.aws_internet_gateway.existing_igw]
+}
+
+resource "aws_route_table" "private_rt" {
+  vpc_id = var.vpc_id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+}
+
+resource "aws_route_table_association" "private_assoc" {
+  count          = length(var.private_subnet_ids)
+  subnet_id      = element(var.private_subnet_ids, count.index)
+  route_table_id = aws_route_table.private_rt.id
 }
