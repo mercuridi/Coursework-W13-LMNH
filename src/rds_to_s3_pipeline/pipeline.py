@@ -1,6 +1,7 @@
 """complete pipeline"""
 from extract import RDSDataGetter
 from transform import TransformRDSData
+from load import DataLoader, BUCKET, METADATA_TABLE_NAMES, DATABASE
 
 
 def run_pipeline():
@@ -9,4 +10,5 @@ def run_pipeline():
     tables = getter.get_all_data()
     transformer = TransformRDSData(tables)
     transformed = transformer.transformed_data()
-    # add load
+    loader = DataLoader(transformed, BUCKET, DATABASE)
+    loader.load()
