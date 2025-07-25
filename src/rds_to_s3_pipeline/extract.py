@@ -73,3 +73,9 @@ class RDSDataGetter:
         meta.update(readings)
         logging.info("Extracted all data")
         return meta
+
+
+if __name__ == "__main__":
+    get = RDSDataGetter()
+    TAB = get.get_all_data()
+    print(TAB)
