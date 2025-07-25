@@ -1,8 +1,18 @@
-FROM python:3.13
-WORKDIR src/.
-COPY COPY ../requirements.txt .
+FROM python:latest
+
+WORKDIR /pipeline
+
+COPY requirements.txt .
+
 RUN pip3 install -r requirements.txt
 
-COPY pipeline2.py .
+COPY src/rds_to_s3_pipeline/extract.py .
+COPY src/rds_to_s3_pipeline/transform.py .
+COPY src/rds_to_s3_pipeline/load.py .
+COPY src/rds_to_s3_pipeline/pipeline.py .
 
-CMD python3 pipeline.py
+CMD ["python3", "pipeline.py"]
+
+# Local
+# docker build -f src/rds_to_s3_pipeline/dockerfile -t pipeline2:latest .
+# docker run --env-file .env pipeline2:latest

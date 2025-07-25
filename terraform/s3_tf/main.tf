@@ -40,12 +40,13 @@ resource "aws_iam_role" "glue_service_role" {
 
 # Glue permissions
 resource "aws_iam_role_policy" "glue_inline_permissions" {
-  name = "glue-catalog-s3-access"
+  name = "c18-botanists-glue-s3-access"
   role = aws_iam_role.glue_service_role.id
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
+      # Glue Catalog Permissions
       {
         Effect = "Allow",
         Action = [
@@ -53,9 +54,18 @@ resource "aws_iam_role_policy" "glue_inline_permissions" {
           "glue:UpdateTable",
           "glue:GetTable",
           "glue:GetTables",
+          "glue:GetPartition",
+          "glue:GetPartitions",
+          "glue:BatchGetPartition",
+          "glue:BatchCreatePartition",
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:UpdatePartition"
         ],
         Resource = "*"
       },
+
+      # S3 Bucket Permissions
       {
         Effect = "Allow",
         Action = [
@@ -65,13 +75,28 @@ resource "aws_iam_role_policy" "glue_inline_permissions" {
           "s3:ListBucket"
         ],
         Resource = [
-          "arn:aws:s3:::c18-botanists-s3",
-          "arn:aws:s3:::c18-botanists-s3/*"
+          "arn:aws:s3:::c18-botanists-s3-bucket",
+          "arn:aws:s3:::c18-botanists-s3-bucket/*"
+        ]
+      },
+
+      # CloudWatch Logs Permissions
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = [
+          "arn:aws:logs:eu-west-2:129033205317:log-group:/aws-glue/*",
+          "arn:aws:logs:eu-west-2:129033205317:log-group:/aws-glue/*:log-stream:*"
         ]
       }
     ]
   })
 }
+
 
 
 

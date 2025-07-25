@@ -1,4 +1,6 @@
-"""Extracts all metadata from the RDS"""
+"""Extracts all metadata from """
+import os
+import logging
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -12,15 +14,23 @@ class RDSDataGetter:
 
     def __init__(self):
         load_dotenv()
-        self.conn = get_conn()
+        self.conn = pymssql.connect(
+            os.environ["DB_HOST"],
+            os.environ["DB_USER"],
+            os.environ["DB_PASSWORD"],
+            os.environ["DB_NAME"]
+        )
 
-    def get_metadata(self) -> dict[pd.DataFrame]:
+        logging.info("Connected to RDS")
+
+    def get_metadata(self) -> dict[str, pd.DataFrame]:
         """gets all metadata tables"""
         conn = self.conn
         cursor = conn.cursor()
         df_dict = {}
         try:
             for table in self.METADATA_TABLES:
+                logging.info(f"Querying {table} table")
                 query = f"SELECT * FROM {table};"
                 cursor.execute(query)
                 rows = cursor.fetchall()
@@ -29,14 +39,16 @@ class RDSDataGetter:
                 df_dict[table] = df
         finally:
             cursor.close()
+            logging.info("Cursor closed")
         return df_dict
 
-    def get_readings(self) -> dict[pd.DataFrame]:
+    def get_readings(self) -> dict[str, pd.DataFrame]:
         """gets reading table from yesterday and closes connection"""
         conn = self.conn
         cursor = conn.cursor()
         df_dict = {}
         try:
+            logging.info(f"Querying readings table")
             query = """
             SELECT * FROM reading
             WHERE reading_taken >= CAST(DATEADD(DAY, -1, CAST(GETDATE() AS DATE)) AS DATETIME)
@@ -49,12 +61,15 @@ class RDSDataGetter:
             df_dict['reading'] = df
         finally:
             cursor.close()
+            logging.info("Cursor closed")
             conn.close()
+            logging.info("Connection closed")
         return df_dict
 
-    def get_all_data(self) -> dict[pd.DataFrame]:
+    def get_all_data(self) -> dict[str, pd.DataFrame]:
         """gets all data """
         meta = self.get_metadata()
         readings = self.get_readings()
         meta.update(readings)
+        logging.info("Extracted all data")
         return meta
