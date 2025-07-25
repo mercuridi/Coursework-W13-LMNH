@@ -1,6 +1,7 @@
 """Script to load cleaned data into the SQL Server RDS"""
 import os
 import logging
+from dotenv import load_dotenv
 
 import pandas as pd
 import numpy as np
@@ -74,6 +75,7 @@ class DataLoader:
     def __init__(self, df: pd.DataFrame):
         """Constructor for class"""
         logging.info("Constructing loader class")
+        load_dotenv()
         if not isinstance(df, pd.DataFrame):
             raise ValueError(f"Input to load stage must be a dataframe; received {type(df)}")
         if len(df) == 0:
@@ -193,14 +195,6 @@ class DataLoader:
 
         logging.debug("ID for %s: %s", table_name, val)
         return val
-    
-
-    def check_table_name_valid(self, table_name: str):
-        """Check if a table name is in the list of known tables before we try to query it"""
-        logging.debug("Checking table name %s is valid", table_name)
-        if table_name not in RDS_TABLES_WITH_FK:
-            raise ValueError(f"Given table name {table_name} is not a known destination")
-        logging.debug("Table name OK")
 
 
     def close_conn(self):
@@ -209,6 +203,14 @@ class DataLoader:
         self.conn.close()
         logging.info("RDS connection closed")
 
+
+def check_table_name_valid(table_name: str):
+    """Check if a table name is in the list of known tables before we try to query it"""
+    logging.debug("Checking table name %s is valid", table_name)
+    if table_name not in RDS_TABLES_WITH_FK:
+        raise ValueError(f"Given table name {table_name} is not a known destination")
+    logging.debug("Table name OK")
+    return True
 
 # Example usage
 
