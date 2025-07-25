@@ -50,7 +50,7 @@ We also developed a dashboard for the botanists employed at LMNH, so that they c
 5. To test: `python3 -m pytest test/*.py`
 6. To run the first pipeline: `python3 src/api_to_rds_pipeline/pipeline.py`
 7. To run the second pipeline: `python3 src/rds_to_s3_pipeline/pipeline.py`
-8. To run the dashboard (localhost): ``
+8. To run the dashboard (localhost): `streamlit run src/dashboard/streamlit_dashboard.py`
 
 Each pipeline also has a `deploy.sh` script to ease deployment of new versions to the cloud repository.
 The user credentials it uses rely on secrets stored on the local machine.
