@@ -54,3 +54,7 @@ We also developed a dashboard for the botanists employed at LMNH, so that they c
 
 Each pipeline also has a `deploy.sh` script to ease deployment of new versions to the cloud repository.
 The user credentials it uses rely on secrets stored on the local machine.
+
+## Future improvements
+- API to RDS load script needs optimisations - check database directly for existence instead of downloading the table on each change
+- Dashboard could be improved on UX/UI
