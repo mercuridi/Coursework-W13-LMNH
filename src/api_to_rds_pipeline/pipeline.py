@@ -13,16 +13,9 @@ def run_pipeline(terminal_output=True):
     pipeline_start = datetime.datetime.now()
 
     # logging handler setup
-    logging_handlers = [
-        # logging.FileHandler(
-        #     filename="logs/pipeline.log",
-        #     mode="w",
-        #     encoding="utf8",
-        # )
-    ]
+    logging_handlers = []
 
-    # enables terminal output
-    # turn on for CloudWatch
+    # terminal output turned on for CloudWatch
     if terminal_output:
         logging_handlers.append(logging.StreamHandler())
 
