@@ -2,6 +2,7 @@
 
 import pandas as pd
 import pytest
+import dotenv
 
 from src.api_to_rds_pipeline.transform import PlantDataTransformer
 from src.api_to_rds_pipeline.load import RDS_TABLES_WITH_FK, DataLoader
@@ -9,6 +10,7 @@ from test_atr_transform import EXAMPLE
 
 @pytest.fixture
 def dataloader():
+    dotenv.load_dotenv()
     transformer = PlantDataTransformer(EXAMPLE)
     return DataLoader(transformer.transform())
 
