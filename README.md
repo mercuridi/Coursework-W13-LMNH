@@ -1,5 +1,12 @@
 # Coursework-W13-LMNH
 ## Project introduction
+Project (case study) for LMNH to help with tracking their extensive range of plants.
+LMNH installed monitors on each of the plants in their conservatory, reporting soil moisture and soil temperature readings.
+Further, the readings include the date and time of when the plant was last watered and their origin, or "home country".
+We planned and implemented a 2-step ETL pipeline to help LMNH keep track of their plants:
+- API to RDS, to collect the data from the API endpoints representing each monitor every minute
+- RDS to S3, to send data from the day before to the long term storage S3 bucket
+We also developed a dashboard for the botanists employed at LMNH, so that they could easily monitor each plant and even partition their analysis by the assigned botanist.
 
 ## Technologies used
 1. ECR - Docker images
