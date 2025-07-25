@@ -24,3 +24,5 @@ requests-mock
 pymssql
 boto3
 awswrangler
+streamlit
+altair 

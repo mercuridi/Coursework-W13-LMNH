@@ -63,3 +63,9 @@ class RDSDataGetter:
         readings = self.get_readings()
         meta.update(readings)
         return meta
+
+
+if __name__ == "__main__":
+    get = RDSDataGetter()
+    TAB = get.get_all_data()
+    print(TAB)
