@@ -22,7 +22,10 @@ class TransformRDSData:
 
         means = self.readings.groupby('plant_id')[
             ['soil_moisture', 'soil_temperature']].mean().rename(
-                columns={'soil_moisture': 'mean_soil_moisture', 'soil_temperature': 'mean_soil_temperature'})
+                columns={
+                    'soil_moisture': 'mean_soil_moisture',
+                    'soil_temperature': 'mean_soil_temperature'
+                })
 
         date = self.readings.groupby('plant_id')['reading_taken'].first(
         ).reset_index().rename(columns={'reading_taken': 'date'})

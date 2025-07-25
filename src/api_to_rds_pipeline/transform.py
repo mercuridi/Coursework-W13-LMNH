@@ -88,7 +88,7 @@ class PlantDataTransformer:
             (self.df['soil_temperature'] < -10) | (self.df['soil_temperature'] > 60))
         logging.info("Replaced unusual temperature values with null")
 
-        
+
         # Drop rows which have a null value for moisture or temperature
         self.df = self.df.dropna(subset=['soil_temperature', 'soil_moisture'])
         logging.info("Dropped rows with a NaN in float columns")

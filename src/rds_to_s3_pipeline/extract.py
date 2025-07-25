@@ -1,8 +1,8 @@
-"""Extracts all metadata from """
-import os
+"""Extracts all metadata from the RDS"""
 import pandas as pd
-import pymssql
 from dotenv import load_dotenv
+
+from src.utils.utils import get_conn
 
 
 class RDSDataGetter:
@@ -12,12 +12,7 @@ class RDSDataGetter:
 
     def __init__(self):
         load_dotenv()
-        self.conn = pymssql.connect(
-            os.environ["DB_HOST"],
-            os.environ["DB_USER"],
-            os.environ["DB_PASSWORD"],
-            os.environ["DB_NAME"]
-        )
+        self.conn = get_conn()
 
     def get_metadata(self) -> dict[pd.DataFrame]:
         """gets all metadata tables"""
