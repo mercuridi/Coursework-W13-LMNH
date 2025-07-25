@@ -141,7 +141,7 @@ def filter_unwatered_plants():
     overdue = latest_watered[latest_watered['last_watered'] < cutoff]
     botanists = overdue['botanist_name'].dropna().unique()
     selected_botanist = st.selectbox(
-        'select botanist', ['All']+list(botanists))
+        'select botanist:', ['All']+list(botanists))
     if selected_botanist != 'All':
         overdue = overdue[overdue['botanist_name'] == selected_botanist]
 
