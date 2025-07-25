@@ -12,3 +12,7 @@ def run_pipeline():
     transformed = transformer.transformed_data()
     loader = DataLoader(transformed, BUCKET, DATABASE)
     loader.load()
+
+
+if __name__ == "__main__":
+    run_pipeline()
