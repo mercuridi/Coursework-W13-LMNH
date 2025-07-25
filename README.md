@@ -8,9 +8,11 @@ We planned and implemented a 2-step ETL pipeline to help LMNH keep track of thei
 - RDS to S3, to send data from the day before to the long term storage S3 bucket
 We also developed a dashboard for the botanists employed at LMNH, so that they could easily monitor each plant and even partition their analysis by the assigned botanist.
 
+The dashboard currently is hosted at: `http://13.40.136.193:8501/`
+
 ## Technologies used
 1. ECR - Docker images
-2. ECS/Fargate to run cleaning/pipeline
+2. ECS/Fargate/Lambda to run pipelines
 3. RDS for short term data (24 hours)
 4. S3 for long term storage - time-partitioned
 5. Streamlit dashboard for visualisations - hosted on ECS service
