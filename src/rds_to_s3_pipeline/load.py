@@ -2,13 +2,14 @@
 and values containing dataframes of the tables' data'''
 import os
 from datetime import datetime
+import time
 import logging
 import pandas as pd
 import boto3
 import awswrangler as wr
 import pymssql
 
-BUCKET = "c18-botanists-s3-bucket "
+BUCKET = "c18-botanists-s3-bucket"
 METADATA_TABLE_NAMES = ['plant', 'botanist', 'photo',
                         'origin', 'city', 'country']
 DATABASE = "c18_botanists_db"
@@ -47,9 +48,9 @@ class DataLoader:
 
     def upload_reading_data(self, df: pd.DataFrame):
         '''Uploads all the reading data '''
-        df['year'] = df['recording_taken'].dt.year
-        df['month'] = df['recording_taken'].dt.month
-        df['day'] = df['recording_taken'].dt.day
+        df['year'] = df['reading_taken'].dt.year
+        df['month'] = df['reading_taken'].dt.month
+        df['day'] = df['reading_taken'].dt.day
 
         wr.s3.to_parquet(df, path=f's3://{self.bucket}/input/reading',
                          dataset=True, partition_cols=['year', 'month', 'day'],
@@ -70,10 +71,25 @@ class DataLoader:
 
         logging.info(f'Summaries uploaded to {self.bucket}, bucket!')
 
+    def run_crawler_and_wait(self, crawler_name: str, timeout: int = 300):
+        """Wait until the Glue crawler is no longer running."""
+        client = boto3.client("glue")
+        client.start_crawler(Name=crawler_name)
+        logging.info("Crawler started...")
+
+        elapsed = 0
+        while elapsed < timeout:
+            response = client.get_crawler(Name=crawler_name)
+            state = response["Crawler"]["State"]
+            if state == "READY":
+                return
+            time.sleep(5)
+            elapsed += 5
+        raise TimeoutError(f"Crawler '{crawler_name}' did not finish in time.")
+
     def get_latest_reading_taken(self) -> str:
         '''Query S3 bucket for timestamp of latest reading'''
         query = "SELECT MAX(reading_taken) AS latest FROM reading"
-
         df = wr.athena.read_sql_query(
             sql=query,
             database=self.database,
@@ -91,8 +107,17 @@ class DataLoader:
 
     def delete_old_readings(self, latest_reading_taken):
         '''Using the latest reading in S3, deleted all older readings from RDS'''
-        timestamp = datetime.strptime(
-            latest_reading_taken, "%Y-%m-%d %H:%M:%S")
+        if latest_reading_taken in [None, 'NaT', 'nan']:
+            logging.warning(
+                "No latest reading found in S3. Skipping deletion.")
+            return 0
+
+        try:
+            timestamp = datetime.strptime(
+                latest_reading_taken, "%Y-%m-%d %H:%M:%S")
+        except ValueError as e:
+            logging.error(f"Invalid datetime format: {latest_reading_taken}")
+            return 0
 
         cursor = self.conn.cursor()
 
@@ -116,6 +141,10 @@ class DataLoader:
         self.upload_reading_data(self.df_dict['reading'])
         self.upload_summary_data(self.df_dict['summary'])
 
+        # runs the crawler
+        self.run_crawler_and_wait('c18-botanists-crawler')
+        logging.info("Crawler finished.")
+
         # clean up
         latest = self.get_latest_reading_taken()
         logging.info(f"Latest reading_taken in S3: {latest}")
@@ -123,7 +152,3 @@ class DataLoader:
         deleted = self.delete_old_readings(latest)
         self.conn.close()
         logging.info(f"Deleted {deleted} rows from RDS older than {latest}")
-
-
-# loader = DataLoader(df_dict, BUCKET, DATABASE)
-# loader.load()
