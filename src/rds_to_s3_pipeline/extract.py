@@ -2,8 +2,9 @@
 import os
 import logging
 import pandas as pd
-import pymssql
 from dotenv import load_dotenv
+
+from src.utils.utils import get_conn
 
 
 class RDSDataGetter:
@@ -19,6 +20,7 @@ class RDSDataGetter:
             os.environ["DB_PASSWORD"],
             os.environ["DB_NAME"]
         )
+
         logging.info("Connected to RDS")
 
     def get_metadata(self) -> dict[str, pd.DataFrame]:

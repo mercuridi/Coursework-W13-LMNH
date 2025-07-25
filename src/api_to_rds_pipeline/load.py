@@ -1,11 +1,11 @@
 """Script to load cleaned data into the SQL Server RDS"""
-import os
 import logging
 from dotenv import load_dotenv
 
 import pandas as pd
 import numpy as np
-import pymssql
+
+from src.utils.utils import get_conn
 
 # expose the ERD as a dictionary
 RDS_TABLES_WITH_FK = {
@@ -82,12 +82,7 @@ class DataLoader:
             raise ValueError("Dataframe must contain data.")
 
         self.api_data = df
-        self.conn = pymssql.connect(
-            os.environ["DB_HOST"],
-            os.environ["DB_USER"],
-            os.environ["DB_PASSWORD"],
-            os.environ["DB_NAME"]
-        )
+        self.conn = get_conn()
 
         self.remote_tables: dict[pd.DataFrame] = {}
         self.update_tables()
@@ -144,7 +139,10 @@ class DataLoader:
             logging.debug("No value found, adding to table to fetch foreign key ID")
 
             logging.debug("Constructing query")
-            query_string = f"insert into {table_name} ({', '.join(table_columns)}) values ({', '.join(['%s' for _ in range(len(table_columns))])});"
+            query_string = f"""
+            INSERT INTO {table_name} ({', '.join(table_columns)})
+            VALUES ({', '.join(['%s' for _ in range(len(table_columns))])});
+            """
             logging.debug("Query string:")
             logging.debug(query_string)
 

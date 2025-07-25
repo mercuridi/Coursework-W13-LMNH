@@ -1,7 +1,9 @@
 """Extract plant data from endpoints"""
-import requests
 import logging
 from multiprocessing import Pool
+
+import requests
+
 
 BASE_ENDPOINT = "https://sigma-labs-bot.herokuapp.com/api/plants/"
 START_ID = 1
@@ -15,37 +17,37 @@ class PlantGetter:
     def __init__(self, url: str, start: int, max_404: int):
         logging.info("Constructing getter class")
         self.url = url
-        self.id = start
+        self.endpoint_id = start
         self.max_404 = max_404
         self.consecutive_404 = 0
         self.plant_data = []
-        self.endpoints = [i for i in range(START_ID, MAX_ID)]
+        self.endpoints = list(range(START_ID, MAX_ID))
         logging.info("Getter constructed")
         logging.info("Max consecutive 404s: %s", self.max_404)
 
-    def get_plant(self, id: int) -> dict:
+    def get_plant(self, endpoint_id: int) -> dict:
         """Returns data for specific id endpoint, or a dictionary detailing the error
         if it was not a successful request"""
         logging.debug("Constructing endpoint")
-        endpoint = f'{self.url}{id}'
-        logging.debug("Getting plant ID %s from endpoint: %s", id, endpoint)
+        endpoint_full_url = f'{self.url}{endpoint_id}'
+        logging.debug("Getting plant ID %s from endpoint: %s", endpoint_id, endpoint_full_url)
         try:
-            response = requests.get(endpoint, timeout=10)
+            response = requests.get(endpoint_full_url, timeout=10)
 
             if response.status_code == 200:
                 data = response.json()
                 return data
-            logging.error("Endpoint 404 error at ID %s", id)
-            return {"error": "404 Not Found", "id": id}
+            logging.error("Endpoint 404 error at ID %s", endpoint_id)
+            return {"error": "404 Not Found", "id": endpoint_id}
         except requests.exceptions.RequestException:
             logging.error("Endpoint request exception")
-            return {"error": "Request Exception", "id": id}
+            return {"error": "Request Exception", "id": endpoint_id}
 
     def loop_ids_single_threaded(self) -> list[dict]:
         """Loops through endpoints, stopping after a certain number of failed requests"""
         logging.info("Looping over IDs - single-thread")
         while self.consecutive_404 < self.max_404:
-            data = self.get_plant(self.id)
+            data = self.get_plant(self.endpoint_id)
             logging.debug("Obtained data: %s", data)
             if "error" not in data:
                 logging.debug("No error detected in data")
@@ -54,11 +56,11 @@ class PlantGetter:
             else:
                 self.consecutive_404 += 1
                 logging.error("Consecutive 404s: %s", self.consecutive_404)
-            self.id += 1
-            logging.debug("Next endpoint ID: %s", self.id)
+            self.endpoint_id += 1
+            logging.debug("Next endpoint ID: %s", self.endpoint_id)
         logging.info("Finished looping IDs")
         return self.plant_data
-    
+
     def loop_ids_multi_threaded(self) -> list[dict]:
         """Loops through endpoints with a multithreaded approach"""
         logging.info("Looping over IDs - multi-threaded")

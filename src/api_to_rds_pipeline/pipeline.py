@@ -65,7 +65,7 @@ def handler(event, context):
         print(f"{event} : Lambda time remaining in MS:",
               context.get_remaining_time_in_millis())
         return {"statusCode": 200}
-    except Exception as e:
+    except (TypeError, ValueError, IndexError) as e:
         return {"statusCode": 500, "error": str(e)}
 
 if __name__ == "__main__":

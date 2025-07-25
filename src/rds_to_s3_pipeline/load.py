@@ -44,7 +44,7 @@ class DataLoader:
         wr.s3.to_parquet(df, path=path, dataset=False, index=False,
                          boto3_session=self.session)
 
-        logging.info(f'{df} uploaded to {self.bucket} bucket!')
+        logging.info('%s uploaded to %s bucket!', df, self.bucket)
 
     def upload_reading_data(self, df: pd.DataFrame):
         '''Uploads all the reading data '''
@@ -56,7 +56,7 @@ class DataLoader:
                          dataset=True, partition_cols=['year', 'month', 'day'],
                          mode='append', boto3_session=self.session)
 
-        logging.info(f'Readings uploaded to {self.bucket}, bucket!')
+        logging.info('Readings uploaded to %s, bucket!', self.bucket)
 
     def upload_summary_data(self, df: pd.DataFrame):
         '''Uploads small summary dataframe to S3 bucket
@@ -69,7 +69,7 @@ class DataLoader:
                          dataset=True, partition_cols=['year', 'month', 'day'],
                          mode='append', boto3_session=self.session)
 
-        logging.info(f'Summaries uploaded to {self.bucket}, bucket!')
+        logging.info('Summaries uploaded to %s, bucket!', self.bucket)
 
     def run_crawler_and_wait(self, crawler_name: str, timeout: int = 300):
         """Wait until the Glue crawler is no longer running."""
@@ -129,7 +129,7 @@ class DataLoader:
 
         self.conn.commit()
         cursor.close()
-        logging.info(f"DELETED {deleted_count} rows from RDS")
+        logging.info("DELETED %s rows from RDS", deleted_count)
         return deleted_count
 
     def load(self):
@@ -147,8 +147,9 @@ class DataLoader:
 
         # clean up
         latest = self.get_latest_reading_taken()
-        logging.info(f"Latest reading_taken in S3: {latest}")
+        logging.info("Latest reading_taken in S3: %s", latest)
 
         deleted = self.delete_old_readings(latest)
         self.conn.close()
-        logging.info(f"Deleted {deleted} rows from RDS older than {latest}")
+
+        logging.info("Deleted %s rows from RDS older than %s", deleted, latest)
