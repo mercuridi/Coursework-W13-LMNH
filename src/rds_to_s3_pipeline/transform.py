@@ -1,4 +1,5 @@
 """adds summary data to dict"""
+import logging
 import pandas as pd
 
 
@@ -8,6 +9,7 @@ class TransformRDSData:
     def __init__(self, df_dict: dict[str, pd.DataFrame]):
         self.df_dict = df_dict
         self.readings = df_dict.get('reading')
+        logging.info("Constructed transformer")
 
     def create_summary(self):
         """create summary dataframe"""
@@ -44,11 +46,12 @@ class TransformRDSData:
 
         summary['watering_count'] = summary['watering_count'].fillna(
             0).astype(int)
-
+        logging.info("Summary created")
         return summary
 
     def transformed_data(self):
         """returns the entire dataset with summary"""
         summary = self.create_summary()
         self.df_dict['summary'] = summary
+        logging.info("Summary added to dictionary")
         return self.df_dict
