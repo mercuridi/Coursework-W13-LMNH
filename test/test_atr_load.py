@@ -35,4 +35,3 @@ def test_check_table_name_valid_good_input(dataloader):
     assert dataloader.check_table_name_valid("reading")
     assert dataloader.check_table_name_valid("photo")
 
-def 
