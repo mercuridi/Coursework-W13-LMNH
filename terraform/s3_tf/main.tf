@@ -53,6 +53,8 @@ resource "aws_iam_role_policy" "glue_inline_permissions" {
           "glue:UpdateTable",
           "glue:GetTable",
           "glue:GetTables",
+          "glue:GetDatabase",
+          "glue:GetDatabases"
         ],
         Resource = "*"
       },
@@ -65,10 +67,29 @@ resource "aws_iam_role_policy" "glue_inline_permissions" {
           "s3:ListBucket"
         ],
         Resource = [
-          "arn:aws:s3:::c18-botanists-s3",
-          "arn:aws:s3:::c18-botanists-s3/*"
+          "arn:aws:s3:::c18-botanists-s3-bucket",
+          "arn:aws:s3:::c18-botanists-s3-bucket/*"
         ]
-      }
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = [
+          "arn:aws:logs:eu-west-2:129033205317:log-group:/aws-glue/*",
+          "arn:aws:logs:eu-west-2:129033205317:log-group:/aws-glue/*:log-stream:*"
+        ]
+      },
+          {
+      Effect = "Allow",
+      Action = [
+        "glue:GetDatabase"
+      ],
+      Resource = "arn:aws:glue:eu-west-2:129033205317:catalog"
+    }
     ]
   })
 }
