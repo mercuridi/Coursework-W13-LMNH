@@ -195,15 +195,6 @@ class DataLoader:
 
         logging.debug("ID for %s: %s", table_name, val)
         return val
-    
-
-    def check_table_name_valid(self, table_name: str):
-        """Check if a table name is in the list of known tables before we try to query it"""
-        logging.debug("Checking table name %s is valid", table_name)
-        if table_name not in RDS_TABLES_WITH_FK:
-            raise ValueError(f"Given table name {table_name} is not a known destination")
-        logging.debug("Table name OK")
-        return True
 
 
     def close_conn(self):
@@ -212,6 +203,14 @@ class DataLoader:
         self.conn.close()
         logging.info("RDS connection closed")
 
+
+def check_table_name_valid(table_name: str):
+    """Check if a table name is in the list of known tables before we try to query it"""
+    logging.debug("Checking table name %s is valid", table_name)
+    if table_name not in RDS_TABLES_WITH_FK:
+        raise ValueError(f"Given table name {table_name} is not a known destination")
+    logging.debug("Table name OK")
+    return True
 
 # Example usage
 
